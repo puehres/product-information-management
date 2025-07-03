@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar styles */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground));
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground));
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  .animate-in {
+    animation-name: enter;
+    animation-duration: var(--animate-duration, 150ms);
+    animation-timing-function: var(--animate-timing, ease);
+    animation-fill-mode: both;
+  }
+
+  .animate-out {
+    animation-name: exit;
+    animation-duration: var(--animate-duration, 150ms);
+    animation-timing-function: var(--animate-timing, ease);
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    --animate-enter: fade-in;
+  }
+
+  .fade-out {
+    --animate-exit: fade-out;
+  }
+
+  .zoom-in {
+    --animate-enter: zoom-in;
+  }
+
+  .zoom-out {
+    --animate-exit: zoom-out;
+  }
+
+  .slide-in-from-top {
+    --animate-enter: slide-in-from-top;
+  }
+
+  .slide-in-from-bottom {
+    --animate-enter: slide-in-from-bottom;
+  }
+
+  .slide-in-from-left {
+    --animate-enter: slide-in-from-left;
+  }
+
+  .slide-in-from-right {
+    --animate-enter: slide-in-from-right;
+  }
+
+  .slide-out-to-top {
+    --animate-exit: slide-out-to-top;
+  }
+
+  .slide-out-to-bottom {
+    --animate-exit: slide-out-to-bottom;
+  }
+
+  .slide-out-to-left {
+    --animate-exit: slide-out-to-left;
+  }
+
+  .slide-out-to-right {
+    --animate-exit: slide-out-to-right;
+  }
+}
+
+@keyframes enter {
+  from {
+    opacity: var(--animate-enter-opacity, 1);
+    transform: translate3d(
+        var(--animate-enter-translate-x, 0),
+        var(--animate-enter-translate-y, 0),
+        0
+      )
+      scale3d(
+        var(--animate-enter-scale, 1),
+        var(--animate-enter-scale, 1),
+        var(--animate-enter-scale, 1)
+      );
+  }
+}
+
+@keyframes exit {
+  to {
+    opacity: var(--animate-exit-opacity, 1);
+    transform: translate3d(
+        var(--animate-exit-translate-x, 0),
+        var(--animate-exit-translate-y, 0),
+        0
+      )
+      scale3d(
+        var(--animate-exit-scale, 1),
+        var(--animate-exit-scale, 1),
+        var(--animate-exit-scale, 1)
+      );
+  }
+}
+
+/* Animation presets */
+.fade-in {
+  --animate-enter-opacity: 0;
+}
+
+.fade-out {
+  --animate-exit-opacity: 0;
+}
+
+.zoom-in {
+  --animate-enter-opacity: 0;
+  --animate-enter-scale: 0.95;
+}
+
+.zoom-out {
+  --animate-exit-opacity: 0;
+  --animate-exit-scale: 0.95;
+}
+
+.slide-in-from-top {
+  --animate-enter-opacity: 0;
+  --animate-enter-translate-y: -0.5rem;
+}
+
+.slide-in-from-bottom {
+  --animate-enter-opacity: 0;
+  --animate-enter-translate-y: 0.5rem;
+}
+
+.slide-in-from-left {
+  --animate-enter-opacity: 0;
+  --animate-enter-translate-x: -0.5rem;
+}
+
+.slide-in-from-right {
+  --animate-enter-opacity: 0;
+  --animate-enter-translate-x: 0.5rem;
+}
+
+.slide-out-to-top {
+  --animate-exit-opacity: 0;
+  --animate-exit-translate-y: -0.5rem;
+}
+
+.slide-out-to-bottom {
+  --animate-exit-opacity: 0;
+  --animate-exit-translate-y: 0.5rem;
+}
+
+.slide-out-to-left {
+  --animate-exit-opacity: 0;
+  --animate-exit-translate-x: -0.5rem;
+}
+
+.slide-out-to-right {
+  --animate-exit-opacity: 0;
+  --animate-exit-translate-x: 0.5rem;
+}

@@ -192,6 +192,40 @@ curl -X POST http://localhost:8000/feature \
 # If error: Check logs at logs/app.log for stack trace
 ```
 
+## Testing Strategy (MANDATORY)
+
+### Backend Tests
+- [ ] Unit tests for core functionality
+- [ ] Integration tests for API endpoints  
+- [ ] Configuration validation tests
+- [ ] Error handling tests
+
+### Frontend Tests (if applicable)
+- [ ] Component unit tests
+- [ ] Integration tests for key workflows
+- [ ] TypeScript compilation validation
+- [ ] User interaction tests
+
+### Test Execution Plan
+- [ ] Run existing tests to ensure no regression
+- [ ] Add new tests for implemented features
+- [ ] Validate test coverage meets project standards
+- [ ] Test error scenarios and edge cases
+
+## Documentation Updates Required (MANDATORY)
+
+### Core Documentation
+- [ ] Update README.md if setup steps changed
+- [ ] Update API documentation for new endpoints
+- [ ] Update architecture docs if patterns changed
+- [ ] Create/update interface documentation
+
+### Code Documentation
+- [ ] Add docstrings to all new functions (Google style)
+- [ ] Add inline comments for complex logic
+- [ ] Update type hints and annotations
+- [ ] Document configuration options
+
 ## Final validation Checklist
 - [ ] All tests pass: `uv run pytest tests/ -v`
 - [ ] No linting errors: `uv run ruff check src/`
@@ -199,7 +233,9 @@ curl -X POST http://localhost:8000/feature \
 - [ ] Manual test successful: [specific curl/command]
 - [ ] Error cases handled gracefully
 - [ ] Logs are informative but not verbose
-- [ ] Documentation updated if needed
+- [ ] Documentation updated as specified above
+- [ ] All testing requirements met
+- [ ] Ready for PRP completion workflow
 
 ---
 
@@ -210,3 +246,5 @@ curl -X POST http://localhost:8000/feature \
 - ❌ Don't use sync functions in async context
 - ❌ Don't hardcode values that should be config
 - ❌ Don't catch all exceptions - be specific
+- ❌ Don't skip testing requirements - they are mandatory
+- ❌ Don't skip documentation updates - they prevent future confusion

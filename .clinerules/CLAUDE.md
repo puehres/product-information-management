@@ -1,8 +1,33 @@
+### 🚨 MANDATORY TASK COMPLETION WORKFLOW
+**BEFORE starting any new task:**
+- [ ] Read current task from TASK.md
+- [ ] Understand dependencies and requirements
+- [ ] Verify all prerequisite tasks are marked complete
+
+**DURING task execution:**
+- [ ] Check off individual subtasks in TASK.md as they are completed
+- [ ] Add any discovered subtasks to "Discovered During Work" section
+- [ ] Update TASK.md immediately after completing each subtask
+
+**AFTER completing ANY subtask:**
+- [ ] IMMEDIATELY update TASK.md with completion status
+- [ ] Add completion notes if significant work was done
+- [ ] Verify all dependencies are met before moving to next task
+
+**BEFORE claiming task completion:**
+- [ ] Double-check ALL subtasks are marked complete in TASK.md
+- [ ] Add completion timestamp and summary notes
+- [ ] Document any deviations or additional work done
+- [ ] Mark main task as ✅ COMPLETED with date
+
 ### 🔄 Project Awareness & Context
 - **Always read `PLANNING.md`** at the start of a new conversation to understand the project's architecture, goals, and technology stack.
 - **Check `TASK.md`** before starting a new task. If the task isn't listed, add it with a brief description and today's date.
 - **Use consistent naming conventions, file structure, and architecture patterns** as described in `PLANNING.md`.
 - **Follow the technology stack** specified in the planning document - don't introduce new technologies without discussion.
+- **Follow the Enhanced Workflow** as documented in `docs/enhanced_workflow.md` for all development tasks.
+- **Use the provided templates** in `PRPs/templates/` for PRP generation, review, and completion.
+- **Maintain interface documentation** in `docs/interfaces/` when implementing new features.
 
 ### 🧱 Code Structure & Modularity
 - **Never create a file longer than 500 lines of code.** If a file approaches this limit, refactor by splitting it into modules or helper files.
@@ -23,6 +48,21 @@
 - **Mark completed tasks in `TASK.md`** immediately after finishing them.
 - **Add new sub-tasks or TODOs** discovered during development to `TASK.md` under a "Discovered During Work" section.
 - **Follow the project phases** as outlined in TASK.md - don't skip ahead without completing dependencies.
+
+### 🚨 CRITICAL WORKFLOW RULES
+- **NEVER proceed to a new task without marking the previous task complete in TASK.md**
+- **NEVER claim a task is finished without updating TASK.md first**
+- **NEVER use attempt_completion without verifying TASK.md is updated**
+- **ALWAYS pause after each subtask completion to update TASK.md**
+
+### ✅ COMPLETION VERIFICATION CHECKLIST
+Before using attempt_completion or claiming any task is done:
+- [ ] All subtasks marked complete in TASK.md with [x]
+- [ ] Any new discoveries added to "Discovered During Work" section
+- [ ] Completion timestamp added (YYYY-MM-DD format)
+- [ ] Completion notes documenting what was accomplished
+- [ ] Next task dependencies verified as met
+- [ ] Main task marked as ✅ COMPLETED with date
 
 ### 📎 Style & Conventions
 - **Backend**: Use **Python** with **FastAPI** framework and **SQLAlchemy/SQLModel** for ORM.
