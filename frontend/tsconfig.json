@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    // Target and module settings
     "target": "es2017",
     "lib": ["dom", "dom.iterable", "es6"],
     "allowJs": true,
@@ -14,8 +13,6 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-
-    // Path mapping for cleaner imports
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
@@ -27,8 +24,6 @@
       "@/styles/*": ["./src/styles/*"],
       "@/public/*": ["./public/*"]
     },
-
-    // Strict type checking options
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": true,
@@ -38,8 +33,6 @@
     "noImplicitOverride": true,
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
-
-    // Additional checks
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -48,8 +41,6 @@
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
-
-    // Plugin configuration for Next.js
     "plugins": [
       {
         "name": "next"
