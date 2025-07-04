@@ -33,16 +33,14 @@ Build value-delivering iterations that progressively expand from single supplier
 **Completion Notes**: Frontend environment fully validated with 100% test coverage and all performance targets exceeded.
 **Next**: Dependencies met for Task 2
 
-### Task 2: MVP Database Design (Supabase)
+### Task 2: MVP Database Design (Supabase) - Simplified
 
 - [ ] Set up Supabase project in eu-central-1 (Frankfurt) region
 - [ ] Configure Supabase client and connection strings
 - [ ] Design simple database schema for MVP
-- [ ] Create core tables: products, images, batches, suppliers
-- [ ] Add basic tax_classes table for Gambio integration
+- [ ] Create core tables: suppliers, upload_batches, products, images
 - [ ] Set up database relationships and constraints
 - [ ] Create Lawn Fawn supplier seed data
-- [ ] Create basic tax class seed data (AT: 20%, DE: 19%)
 - [ ] Write database utility functions with Supabase client
 - [ ] Add indexing for performance
 - [ ] Configure local development with Supabase
@@ -53,12 +51,16 @@ Build value-delivering iterations that progressively expand from single supplier
 - **Features**: PostgreSQL + Real-time + Auth + Storage included
 - **Cost**: $0/month for MVP vs $28/month AWS RDS
 
-**MVP Tables:**
+**MVP Tables (Essential Only):**
 - `suppliers`: Basic supplier information
-- `upload_batches`: Track CSV uploads and processing
+- `upload_batches`: Track invoice/CSV uploads and processing
 - `products`: Core product data with Gambio fields
 - `images`: Image metadata and S3 URLs
-- `tax_classes`: Multi-country VAT support
+
+**Tax Handling (Deferred to Phase 2):**
+- **MVP Approach**: Use hardcoded tax class ID in Gambio export
+- **Future Enhancement**: Add tax_classes table for multi-country VAT support
+- **Rationale**: Focus on core workflow validation first, add tax complexity later
 
 **Environment Setup:**
 ```env
@@ -70,6 +72,9 @@ DATABASE_URL=postgresql://postgres:[password]@db.[project].supabase.co:5432/post
 
 # Redis (Upstash free tier)
 REDIS_URL=rediss://default:password@region.upstash.io:6380
+
+# Tax Configuration (MVP - hardcoded)
+GAMBIO_DEFAULT_TAX_CLASS_ID=1
 ```
 
 **Technology Stack:**
@@ -78,8 +83,14 @@ REDIS_URL=rediss://default:password@region.upstash.io:6380
 - **SQLAlchemy**: Standard PostgreSQL ORM (works with Supabase)
 - **Alembic**: Database migrations (standard PostgreSQL)
 
+**MVP Benefits:**
+- **Faster Development**: Focus on core product processing workflow
+- **Simpler Testing**: Fewer tables and relationships to manage
+- **Iterative Approach**: Add tax complexity when workflow is validated
+- **Quick Value**: Get to product automation faster
+
 **Dependencies**: Task 1
-**Output**: Cost-effective Supabase database setup with $0/month MVP cost
+**Output**: Simplified, focused Supabase database setup for MVP validation
 
 ### Task 3: Lawn Fawn Invoice Parser (PDF + CSV Support)
 
