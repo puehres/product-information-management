@@ -72,26 +72,31 @@ class TestSettings:
             assert settings.backend_port == 9000
             assert settings.app_name == 'Test Application'
 
-    def test_optional_api_keys(self):
+    def test_optional_api_keys(self, mock_environment_variables):
         """
         Test that optional API keys are handled correctly.
         
         Verifies that API keys default to None when not provided
         and are properly set when environment variables are available.
         """
-        # Test default None values
+        # Import Settings here to ensure it respects the test environment
+        from app.core.config import Settings
+        
+        # Test default None values (environment is already cleaned by fixture)
         settings = Settings()
         assert settings.firecrawl_api_key is None
         assert settings.openai_api_key is None
         
         # Test with environment variables set
-        with patch.dict(os.environ, {
+        mock_environment_variables({
             'FIRECRAWL_API_KEY': 'test_firecrawl_key',
             'OPENAI_API_KEY': 'test_openai_key'
-        }):
-            settings = Settings()
-            assert settings.firecrawl_api_key == 'test_firecrawl_key'
-            assert settings.openai_api_key == 'test_openai_key'
+        })
+        
+        # Create new settings instance to pick up environment variables
+        settings = Settings()
+        assert settings.firecrawl_api_key == 'test_firecrawl_key'
+        assert settings.openai_api_key == 'test_openai_key'
 
     def test_file_processing_configuration(self):
         """

@@ -5,6 +5,7 @@ This module provides type-safe configuration management using Pydantic settings
 with environment variable support.
 """
 
+import os
 from typing import Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -18,10 +19,31 @@ class Settings(BaseSettings):
     For example, DATABASE_URL environment variable will override database_url.
     """
     
-    # Database Configuration
+    # Database Configuration (Legacy - kept for compatibility)
     database_url: str = Field(
         default="postgresql://user:password@localhost:5432/product_automation",
         description="PostgreSQL database connection URL"
+    )
+    
+    # Supabase Configuration
+    supabase_url: str = Field(
+        default="https://your-project-ref.supabase.co",
+        description="Supabase project URL"
+    )
+    
+    supabase_anon_key: str = Field(
+        default="your-anon-key-here",
+        description="Supabase anonymous key for client-side operations"
+    )
+    
+    supabase_service_key: str = Field(
+        default="your-service-key-here",
+        description="Supabase service role key for server-side operations"
+    )
+    
+    supabase_database_url: str = Field(
+        default="postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres",
+        description="Direct PostgreSQL connection URL for Supabase database"
     )
     
     # Redis Configuration
@@ -118,9 +140,32 @@ class Settings(BaseSettings):
         description="Timeout for scraping requests in seconds"
     )
     
+    # Tax Configuration (MVP - hardcoded)
+    gambio_default_tax_class_id: int = Field(
+        default=1,
+        description="Default tax class ID for Gambio exports"
+    )
+    
+    # Currency Configuration
+    default_currency_from: str = Field(
+        default="USD",
+        description="Default source currency for conversions"
+    )
+    
+    default_currency_to: str = Field(
+        default="EUR",
+        description="Default target currency for conversions"
+    )
+    
+    default_exchange_rate: float = Field(
+        default=0.85,
+        description="Default USD to EUR exchange rate"
+    )
+    
     class Config:
         """Pydantic configuration."""
-        env_file = ".env"
+        # Only load .env file if not running tests
+        env_file = ".env" if not os.getenv("PYTEST_RUNNING") else None
         env_file_encoding = "utf-8"
         case_sensitive = False
 

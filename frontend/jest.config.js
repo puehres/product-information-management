@@ -23,7 +23,9 @@ const customJestConfig = {
     "^@/types/(.*)$": "<rootDir>/src/types/$1",
     "^@/utils/(.*)$": "<rootDir>/src/utils/$1",
     "^@/styles/(.*)$": "<rootDir>/src/styles/$1",
-    "^@/public/(.*)$": "<rootDir>/public/$1",
+    "^@/public/(.*)$": "<rootDir>/src/public/$1",
+    // Mock problematic ES modules
+    "^@supabase/supabase-js$": "<rootDir>/src/__mocks__/@supabase/supabase-js.js",
   },
 
   // Test file patterns
@@ -48,9 +50,9 @@ const customJestConfig = {
     "^.+\\.(js|jsx|ts|tsx)$": ["babel-jest", { presets: ["next/babel"] }],
   },
 
-  // Transform ignore patterns
+  // Transform ignore patterns - allow transformation of Supabase ES modules
   transformIgnorePatterns: [
-    "/node_modules/",
+    "/node_modules/(?!(@supabase|isows|@supabase/realtime-js|@supabase/supabase-js)/)",
     "^.+\\.module\\.(css|sass|scss)$",
   ],
 

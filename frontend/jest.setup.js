@@ -83,6 +83,8 @@ jest.mock("next/head", () => ({
 process.env.NEXT_PUBLIC_API_URL = "http://localhost:8000";
 process.env.NEXT_PUBLIC_APP_NAME = "Universal Product Automation System";
 process.env.NEXT_PUBLIC_APP_VERSION = "1.0.0";
+process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test-project.supabase.co";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
