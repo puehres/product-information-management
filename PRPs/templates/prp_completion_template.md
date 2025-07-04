@@ -27,41 +27,6 @@
 - [ ] Interface documentation created/updated
 - [ ] Configuration documentation updated
 
-## TASK.md Update Requirements
-
-### Subtask Completion
-```markdown
-Copy the relevant section from TASK.md and mark completed items:
-
-### Task [X]: [Task Name]
-- [x] [Completed subtask 1]
-- [x] [Completed subtask 2]
-- [ ] [Incomplete subtask - if any]
-- [x] [Completed subtask 3]
-```
-
-### Completion Notes
-```markdown
-**Completion Notes ([YYYY-MM-DD]):**
-- [Brief summary of what was accomplished]
-- [Key technical decisions made]
-- [Any deviations from original plan]
-- [Important implementation details]
-- [Performance or quality metrics achieved]
-
-**Discovered During Work:**
-- [New subtasks or requirements discovered]
-- [Additional work completed beyond original scope]
-- [Technical insights or lessons learned]
-- [Dependencies or issues identified for future tasks]
-```
-
-### Task Status Update
-- [ ] Mark main task as ✅ COMPLETED ([YYYY-MM-DD])
-- [ ] Add completion timestamp
-- [ ] Document what was accomplished
-- [ ] Note any deferred items with reasons
-- [ ] Verify next task dependencies are met
 
 ## Quality Verification
 
@@ -104,13 +69,6 @@ Copy the relevant section from TASK.md and mark completed items:
 
 ## Final Checklist
 
-### TASK.md Update
-- [ ] All completed subtasks marked with [x]
-- [ ] Completion notes added with timestamp
-- [ ] "Discovered During Work" section updated
-- [ ] Main task marked as ✅ COMPLETED ([YYYY-MM-DD])
-- [ ] Next task dependencies verified
-
 ### Project State
 - [ ] All tests passing
 - [ ] No critical issues remaining
@@ -128,8 +86,4 @@ Copy the relevant section from TASK.md and mark completed items:
 
 ---
 
-## CRITICAL: TASK.md Update Action Required
-
-**IMMEDIATE ACTION**: Update TASK.md with the completion information above before proceeding to any other work or claiming task completion.
-
-**Verification**: Confirm that TASK.md shows the task as ✅ COMPLETED with proper timestamp and notes.
+**Note**: TASK.md should be updated separately with brief completion status as per CLAUDE.md workflow rules.

@@ -54,9 +54,22 @@
   - 1 failure case
 
 ### ✅ Task Completion
-- **Mark completed tasks in `TASK.md`** immediately after finishing them.
+- **Mark completed tasks in `TASK.md`** immediately after finishing them using the simplified format below.
 - **Add new sub-tasks or TODOs** discovered during development to `TASK.md` under a "Discovered During Work" section.
 - **Follow the project phases** as outlined in TASK.md - don't skip ahead without completing dependencies.
+- **Use brief completion notes** in TASK.md (2-3 lines max) - detailed technical documentation goes in completion files.
+
+#### Simplified TASK.md Completion Format
+```markdown
+### Task X: Task Name ✅ COMPLETED (YYYY-MM-DD)
+- [x] Subtask 1
+- [x] Subtask 2
+- [x] Subtask 3
+
+**Completion Notes**: Brief summary of what was accomplished (1-2 sentences max)
+**Next**: Dependencies met for Task Y / Ready for next phase
+**Discovered During Work**: Any new items found (if applicable)
+```
 
 ### 🚨 CRITICAL WORKFLOW RULES
 - **NEVER proceed to a new task without marking the previous task complete in TASK.md**

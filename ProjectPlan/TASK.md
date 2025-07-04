@@ -1,34 +1,25 @@
-# Universal Product Automation System Tasks
+# Product Automation System Tasks
 
-## Phase 1: Universal Foundation & Setup (Weeks 1-3)
+## Development Strategy: Lean & Iterative
+
+Build value-delivering iterations that progressively expand from single supplier MVP to complete multi-supplier automation system. Each phase delivers immediate, measurable value while building foundation for the next phase.
+
+## Phase 1: MVP - Lawn Fawn → Gambio
+
+**Goal**: Prove core automation value with single supplier
+**Success Criteria**: Process 50 Lawn Fawn products in 30 minutes vs 5 hours manually (90% time reduction)
 
 ### Task 1: Project Setup & Environment ✅ COMPLETED (2025-01-07)
 
 - [x] Set up development environment (Python + Node.js)
-- [x] Create project repository structure with universal architecture
+- [x] Create project repository structure
 - [x] Set up virtual environment and dependencies
-- [x] Configure development database (PostgreSQL + Redis) - Structure ready, connection config in place
-- [ ] Set up basic Docker configuration for future deployment - *Deferred to deployment phase*
+- [x] Configure development database (PostgreSQL + Redis)
 - [x] Create `.env` template with required API keys
-- [x] Initialize universal logging and monitoring system
+- [x] Initialize logging and monitoring system
 
-**Dependencies**: None
-**Output**: Working development environment for universal system
-
-**Completion Notes (2025-01-07):**
-- Backend FastAPI structure created with proper configuration management
-- Frontend Next.js with TypeScript, Tailwind CSS, and Shadcn/UI setup
-- Testing frameworks configured (pytest for backend, Jest for frontend)
-- Environment templates created for both backend and frontend
-- Logging system implemented with structured logging
-- Project follows universal architecture patterns as specified
-- All tests passing and development servers working
-
-**Discovered During Work:**
-- Added comprehensive test suites for both backend and frontend
-- Implemented structured logging with proper configuration management
-- Created detailed README files for both backend and frontend
-- Set up proper TypeScript configuration with strict typing
+**Completion Notes**: Development environment established with FastAPI backend, Next.js frontend, and comprehensive testing frameworks.
+**Next**: Dependencies met for Task 1.5
 
 ### Task 1.5: Frontend Environment Validation ✅ COMPLETED (2025-01-07)
 
@@ -39,467 +30,563 @@
 - [x] Fix any configuration or dependency issues
 - [x] Document troubleshooting steps for future reference
 
+**Completion Notes**: Frontend environment fully validated with 100% test coverage and all performance targets exceeded.
+**Next**: Dependencies met for Task 2
+
+### Task 2: MVP Database Design (Supabase)
+
+- [ ] Set up Supabase project in eu-central-1 (Frankfurt) region
+- [ ] Configure Supabase client and connection strings
+- [ ] Design simple database schema for MVP
+- [ ] Create core tables: products, images, batches, suppliers
+- [ ] Add basic tax_classes table for Gambio integration
+- [ ] Set up database relationships and constraints
+- [ ] Create Lawn Fawn supplier seed data
+- [ ] Create basic tax class seed data (AT: 20%, DE: 19%)
+- [ ] Write database utility functions with Supabase client
+- [ ] Add indexing for performance
+- [ ] Configure local development with Supabase
+
+**Supabase Configuration:**
+- **Region**: eu-central-1 (Frankfurt) for German users
+- **Free Tier**: 500MB database, 2GB bandwidth/month (perfect for MVP)
+- **Features**: PostgreSQL + Real-time + Auth + Storage included
+- **Cost**: $0/month for MVP vs $28/month AWS RDS
+
+**MVP Tables:**
+- `suppliers`: Basic supplier information
+- `upload_batches`: Track CSV uploads and processing
+- `products`: Core product data with Gambio fields
+- `images`: Image metadata and S3 URLs
+- `tax_classes`: Multi-country VAT support
+
+**Environment Setup:**
+```env
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_KEY=your-service-key
+DATABASE_URL=postgresql://postgres:[password]@db.[project].supabase.co:5432/postgres
+
+# Redis (Upstash free tier)
+REDIS_URL=rediss://default:password@region.upstash.io:6380
+```
+
+**Technology Stack:**
+- **Supabase**: PostgreSQL database with real-time features
+- **Python SDK**: supabase-py for Python integration
+- **SQLAlchemy**: Standard PostgreSQL ORM (works with Supabase)
+- **Alembic**: Database migrations (standard PostgreSQL)
+
 **Dependencies**: Task 1
-**Output**: Validated frontend development environment with working tests
+**Output**: Cost-effective Supabase database setup with $0/month MVP cost
 
-**Completion Notes (2025-01-07):**
-- All npm dependencies installed successfully (773 packages in ~28s)
-- Security vulnerabilities fixed (axios updated to 1.10.0, Next.js to 14.2.30)
-- TypeScript compilation passes with strict mode enabled
-- All 22 tests pass with 100% code coverage (exceeds 70% requirement)
-- Development server starts in ~1.5 seconds and responds correctly
-- Production build completes successfully in <30 seconds
-- ESLint and Prettier configured and working properly
-- Next.js configuration fixed (removed deprecated appDir option)
-- Comprehensive automated validation script created (scripts/validate-environment.sh)
-- Performance benchmarks documented and all exceed targets
-- Troubleshooting documentation and .prettierignore file created
+### Task 3: Lawn Fawn Invoice Parser (PDF + CSV Support)
 
-**Discovered During Work:**
-- Fixed Jest DOM type definitions by adding proper import
-- Removed jest-watch-typeahead due to version compatibility issues
-- Created comprehensive validation script with performance tracking
-- Added validation commands to package.json (validate, validate:quick)
-- All performance targets exceeded: install <2min, type-check <30s, tests <1min, dev server <10s, build <2min
+- [ ] Build flexible file upload system (PDF primary, CSV fallback)
+- [ ] Create PDF invoice parser using pdfplumber for table extraction
+- [ ] Extract LF SKU numbers (format: "LF3242") from PDF invoices
+- [ ] Parse product names, USD prices, and quantities from invoices
+- [ ] Implement USD to EUR currency conversion
+- [ ] Create Lawn Fawn CSV parser for product release lists (fallback)
+- [ ] Validate file formats and required fields
+- [ ] Create batch tracking for uploads with invoice metadata
+- [ ] Add basic error handling for malformed files
+- [ ] Store parsed data in database with proper field mapping
+- [ ] Create simple progress tracking
 
-**Performance Benchmarks Achieved:**
-- npm install: ~28 seconds (Target: <2 minutes) ✅
-- TypeScript compilation: <5 seconds (Target: <30 seconds) ✅
-- Test execution: ~0.9 seconds (Target: <1 minute) ✅
-- Development server startup: ~1.5 seconds (Target: <10 seconds) ✅
-- Production build: <30 seconds (Target: <2 minutes) ✅
+**Primary Input: PDF Invoices (Business Workflow):**
+- **LF SKU**: Primary identifier (e.g., "LF3242")
+- **Product Names**: Basic product names from invoice
+- **USD Prices**: Actual purchase prices in USD
+- **Quantities**: Ordered quantities for inventory tracking
+- **Invoice Metadata**: Invoice number, date, line items
 
-### Task 2: Universal Database Design & Implementation
+**Fallback Input: CSV Product Release Lists:**
+- **LF SKU**: Primary identifier (e.g., "LF3242")
+- **product_name**: Complete product names for translation
+- **description**: Detailed product descriptions
+- **MSRP**: Pricing information for comparison
+- **tags**: Category/classification data
+- **barcode**: Additional validation identifier
 
-- [ ] Design comprehensive universal database schema
-- [ ] Create database migration files for all new tables
-- [ ] Implement universal core models (Suppliers, Upload_Batches, Product_Matches, Products, Images, Categories)
-- [ ] Implement review system models (Image_Reviews, Duplicate_Groups, Review_Queue)
-- [ ] Set up all database relationships and constraints
-- [ ] Create seed data for initial suppliers (Lawn Fawn, Craftlines, Mama Elephant)
-- [ ] Write universal database utility functions
-- [ ] Add comprehensive indexing for performance
+**Invoice Parser Implementation:**
+```python
+class LawnFawnInvoiceParser:
+    def __init__(self):
+        self.supported_formats = ['pdf', 'csv']
+        self.usd_to_eur_rate = 0.85  # Configurable conversion rate
+    
+    def parse_file(self, file_path):
+        if file_path.endswith('.pdf'):
+            return self.parse_pdf_invoice(file_path)
+        elif file_path.endswith('.csv'):
+            return self.parse_csv_release_list(file_path)
+    
+    def parse_pdf_invoice(self, pdf_path):
+        # Extract table data from PDF invoice
+        # Look for LF SKU, product name, USD price, quantity
+        # Return structured invoice data
+        pass
+    
+    def convert_usd_to_eur(self, usd_price):
+        return round(usd_price * self.usd_to_eur_rate, 2)
+    
+    def extract_sku_number(self, lf_sku):
+        # "LF3242" → "3242" for search
+        return lf_sku.replace("LF", "").replace("-", "").strip()
+```
 
-**Dependencies**: Task 1
-**Output**: Complete universal database schema with all review and matching capabilities
+**Technology Stack:**
+- **pdfplumber**: PDF table extraction (primary)
+- **PyPDF2**: Fallback for simple text extraction
+- **pandas**: Data processing and validation
+- **Currency conversion**: USD → EUR with configurable rates
 
-### Task 2.5: Universal Supplier Framework
+**Key Features:**
+- Primary PDF invoice processing (business-aligned workflow)
+- Fallback CSV support for product release lists
+- USD to EUR currency conversion
+- LF SKU extraction and validation
+- Invoice metadata tracking (number, date, quantities)
+- Flexible input format detection
+- Batch processing with status tracking
+- Basic error handling and validation
 
-- [ ] Design supplier configuration system architecture
-- [ ] Create supplier registry and management interface
-- [ ] Build pluggable scraping architecture foundation
-- [ ] Implement universal confidence scoring system
-- [ ] Create supplier-specific configuration templates
-- [ ] Add supplier selection and management UI components
-- [ ] Test framework extensibility with all three suppliers
-- [ ] Document supplier addition process
+**Data Enrichment Strategy:**
+```python
+# Invoice data (minimal from PDF)
+invoice_data = {
+    'sku': 'LF3242',
+    'name': 'Capybaras',
+    'usd_price': 15.99,
+    'eur_price': 13.59,  # Converted
+    'quantity': 2,
+    'invoice_number': 'INV-2025-001'
+}
+
+# Same SKU search strategy enriches with full product details
+```
 
 **Dependencies**: Task 2
-**Output**: Complete universal supplier framework
+**Output**: Flexible invoice-driven parsing with PDF support and currency conversion
 
-### Task 3: Universal File Processing System (Enhanced)
+### Task 4: SKU-Search-Based Product Matching (Lawn Fawn)
 
-- [ ] Build flexible file upload system (CSV, Excel, PDF, manual entry)
-- [ ] Create universal identifier extraction engine
-- [ ] Implement auto-detection of identifier columns/fields
-- [ ] Add comprehensive file validation and error handling
-- [ ] Create upload batch tracking and management
-- [ ] Build progress tracking for file processing
-- [ ] Test with various file formats from all suppliers
-- [ ] Add file format conversion utilities
+- [ ] Implement SKU extraction from LF numbers (LF3242 → 3242)
+- [ ] Build Lawn Fawn search URL construction
+- [ ] Implement search results parsing to extract product URLs
+- [ ] Build web scraping with Firecrawl API for product pages
+- [ ] Extract product details (name, description, images) from product pages
+- [ ] Handle scraping errors and retries with exponential backoff
+- [ ] Store scraped data in products table with confidence scoring
+- [ ] Add confidence scoring for search matches
+- [ ] Create fallback strategies for failed searches
+- [ ] Log scraping results and issues for debugging
 
-**Enhanced Supplier-Specific Parsers:**
-- [ ] **Craftlines Parser**: Extract codes/EANs, map German/English names, validate product codes
-- [ ] **Lawn Fawn Parser**: Extract SKUs, normalize product names, detect collections/series
-- [ ] **Mama Elephant Parser**: Clean product names, prepare for fuzzy matching, handle invoice format
+**Lawn Fawn Search Strategy:**
+- **Step 1**: Extract numeric SKU from LF number (LF3242 → 3242)
+- **Step 2**: Use SKU in Lawn Fawn search URL
+- **Step 3**: Parse search results to find product URLs
+- **Step 4**: Scrape actual product pages for details
+- **Step 5**: Store with confidence scoring
 
-**Data Completeness Assessment:**
-- [ ] Identify available vs missing fields per supplier
-- [ ] Create data quality scoring for input files
-- [ ] Generate scraping priority matrix based on available data
-- [ ] Implement field-specific validation rules per supplier
+**Search Implementation:**
+```python
+class LawnFawnMatcher:
+    def __init__(self):
+        self.search_base = "https://www.lawnfawn.com/search"
+    
+    def extract_sku(self, lf_number):
+        # "LF3242" → "3242", handle variations like "LF-3242"
+        return lf_number.upper().replace("LF", "").replace("-", "").strip()
+    
+    def build_search_url(self, sku):
+        # Use actual Lawn Fawn search pattern
+        return f"{self.search_base}?options%5Bprefix%5D=last&q={sku}&filter.p.product_type="
+    
+    async def find_product_url(self, lf_number):
+        # Complete search → parse → extract workflow
+        pass
+```
 
-**Dependencies**: Task 2, 2.5
-**Output**: Universal file processing system with supplier-specific data mapping
+**Confidence Scoring:**
+- **95%**: Unique SKU search result
+- **80%**: Multiple search results (take first)
+- **60%**: Fallback search methods
+- **0%**: No search results (flag for manual review)
 
-### Task 4: Universal Product Matching System (Enhanced)
+**Error Handling:**
+- Invalid LF number format
+- Search returns no results
+- Multiple ambiguous results
+- Scraping failures with retry logic
 
-- [ ] Build supplier-agnostic matching engine
-- [ ] Implement confidence scoring algorithms for all identifier types
-- [ ] Create fallback strategy system (exact, fuzzy, search, browse, manual)
-- [ ] Add progress tracking for batch processing
-- [ ] Build match result storage and retrieval system
-- [ ] Implement supplier-specific scraping strategies
-- [ ] Test matching accuracy across all suppliers
-- [ ] Add match validation and quality metrics
+**Dependencies**: Task 3
+**Output**: Reliable SKU-search-based product matching for Lawn Fawn
 
-**Supplier-Specific Matching Logic:**
+### Task 5: Cloud Image Processing Pipeline
 
-**Craftlines Matching Strategy:**
-- [ ] Implement direct code lookup on website
-- [ ] Add search functionality with product code
-- [ ] Create name-based search fallback
-- [ ] Set confidence scoring: Code match (95%), Search result (80%), Name match (60%)
+- [ ] Set up AWS S3 bucket (eu-central-1, Frankfurt) for image processing
+- [ ] Configure boto3 SDK and S3 client with proper credentials
+- [ ] Implement S3-based image processing workflow (download → process → upload)
+- [ ] Download images from scraped URLs and upload to S3 raw folder
+- [ ] Implement in-memory JPEG conversion using Pillow (no local storage)
+- [ ] Add image dimension validation (≥1000px preferred) with quality warnings
+- [ ] Create standardized naming: {SKU}_{type}_{sequence}.jpeg
+- [ ] Store processed images in S3 organized folder structure
+- [ ] Update database with S3 URLs and image metadata
+- [ ] Implement S3 lifecycle policies for automatic cleanup (7/30 days)
+- [ ] Create export package generation (ZIP with CSV + images)
+- [ ] Generate time-limited presigned URLs for download packages
+- [ ] Add Gambio import instructions generation
 
-**Lawn Fawn Matching Strategy:**
-- [ ] Build URL construction from SKU pattern
-- [ ] Implement SKU search if URL construction fails
-- [ ] Add category browsing + name matching fallback
-- [ ] Set confidence scoring: SKU URL (90%), SKU search (85%), Name match (70%)
+**S3 Configuration:**
+- **Region**: eu-central-1 (Frankfurt)
+- **Bucket Structure**: processing/{batch_id}/ and exports/{export_date}/
+- **Access**: Private bucket with presigned URLs for downloads
+- **Lifecycle**: Auto-delete processing (7 days), exports (30 days)
 
-**Mama Elephant Matching Strategy:**
-- [ ] Implement website search with exact product name
-- [ ] Add fuzzy name matching with similarity scoring
-- [ ] Create category browsing with name variants
-- [ ] Build manual review workflow for low confidence matches
-- [ ] Set confidence scoring: Exact name (75%), Fuzzy match (40-70%), Manual (100%)
+**Processing Pipeline:**
+```python
+# 1. Download from supplier URL
+image_data = download_image(supplier_url)
 
-**Universal Confidence System:**
-- [ ] Create pluggable confidence algorithms per supplier
-- [ ] Implement match method tracking (exact, fuzzy, search, browse, manual)
-- [ ] Add confidence threshold configuration per supplier
-- [ ] Build automatic review flagging for low confidence matches
+# 2. Process in memory (no local storage)
+processed_image = convert_to_jpeg(image_data, quality=85, min_dimension=1000)
 
-**Dependencies**: Task 2.5, 3
-**Output**: Universal product matching system with supplier-specific strategies and confidence scoring
+# 3. Upload to S3 processing folder
+s3_url = upload_to_s3(processed_image, f"processing/{batch_id}/processed/{sku}_main_01.jpeg")
 
-### Task 5: Universal Review & Validation System (Enhanced)
+# 4. Store S3 URL and metadata in database
+save_image_metadata(product_id, s3_url, dimensions, quality_check)
+```
 
-- [ ] Create unified review dashboard interface
-- [ ] Build product match review system with confidence visualization
-- [ ] Implement image review and manual upload functionality
-- [ ] Add duplicate detection and resolution interface
-- [ ] Create bulk review operations (approve/reject multiple items)
-- [ ] Build user feedback and learning system
-- [ ] Implement review queue management with prioritization
-- [ ] Add manual override capabilities for all review types
-- [ ] Test review workflow with mixed supplier data
-- [ ] Create review analytics and reporting
+**Export Package Generation:**
+- **ZIP Format**: gambio_import.csv + images/ folder + import_instructions.md
+- **Download**: 24-hour presigned URLs for user download
+- **User Workflow**: Download → Import CSV to Gambio → FTP images to server
+- **Instructions**: Auto-generated step-by-step Gambio import guide
 
-**Supplier-Specific Review Priorities:**
-- [ ] **Mama Elephant**: All matches require review (name-only matching creates uncertainty)
-- [ ] **Craftlines**: Review failed code lookups and low-quality images
-- [ ] **Lawn Fawn**: Review failed SKU matches and missing images
-- [ ] **Universal**: Review all matches below confidence thresholds per supplier
+**Technology Stack:**
+- **boto3**: AWS SDK for Python S3 integration
+- **Pillow**: In-memory image processing and JPEG conversion
+- **asyncio**: Parallel processing for multiple images
+- **zipfile**: Export package creation
 
-**Enhanced Review Features:**
-- [ ] Confidence score visualization with color-coded indicators
-- [ ] Supplier-specific review workflows and priorities
-- [ ] Bulk approval for high-confidence matches
-- [ ] Manual URL entry and override capabilities
-- [ ] Image quality assessment with manual upload fallback
-- [ ] User feedback loop to improve future matching accuracy
+**Quality Standards:**
+- Convert all formats to JPEG for Gambio compatibility
+- Validate minimum dimensions with quality warnings
+- Generate quality warnings for substandard images
+- Standardized naming convention for Gambio CSV references
 
-**Dependencies**: Task 2, 4
-**Output**: Complete universal review and validation system with supplier-specific workflows
+**Dependencies**: Task 4
+**Output**: Cloud-based image processing with S3 storage and export package generation
 
-### Task 6: Cross-Supplier Duplicate Detection
+### Task 6: German Translation
 
-- [ ] Implement smart duplicate detection algorithms
-- [ ] Build cross-supplier matching (name, description, images, specifications)
-- [ ] Create similarity scoring system (0-100 scale)
-- [ ] Add duplicate resolution interface with merge/keep options
-- [ ] Implement duplicate prevention for future uploads
-- [ ] Create duplicate group management
-- [ ] Add user-guided resolution workflow
-- [ ] Test with overlapping product catalogs from multiple suppliers
-- [ ] Build duplicate detection reporting and analytics
-
-**Dependencies**: Task 2, 4, 5
-**Output**: Comprehensive duplicate detection and resolution system
-
-## Phase 2: Core Features (Weeks 4-5)
-
-### Task 7: Product Enrichment Pipeline
-
-- [ ] Create product enrichment workflow
-- [ ] Implement automatic product URL detection/generation
-- [ ] Build product detail extraction from scraped data
-- [ ] Integrate dual category assignment (IMPORT + supplier)
-- [ ] Create data quality validation
-- [ ] Implement incremental updates (avoid re-scraping)
-- [ ] Add logging and monitoring for the pipeline
-
-**Dependencies**: Task 2, 2.5, 4, 5, 6
-**Output**: Complete product enrichment system with categorization
-
-### Task 8: URL Generation Service
-
-- [ ] Build SEO-friendly URL slug generation
-- [ ] Implement multi-domain URL creation (stempelwunderwelt.at/.de)
-- [ ] Create supplier/category/product hierarchy URLs
-- [ ] Add URL uniqueness validation within namespaces
-- [ ] Implement URL conflict resolution
-- [ ] Create URL preview and validation tools
-- [ ] Test URL generation with sample products
-
-**Dependencies**: Task 2.5, 7
-**Output**: Complete URL generation system
-
-### Task 9: Enhanced Image Processing System
-
-- [ ] Implement image downloading from scraped URLs
-- [ ] Add image dimension validation (minimum 1000px longest edge)
-- [ ] Create automatic JPEG conversion from all formats
-- [ ] Implement image quality assessment and warnings
-- [ ] Create fallback logic for substandard images
-- [ ] Generate SEO-friendly alt text in German
-- [ ] Implement enhanced image naming taxonomy (.jpeg extension)
-- [ ] Create organized image storage by category
-- [ ] Add comprehensive image validation (format, size, quality)
-- [ ] Integrate with image review system for manual uploads
-
-**Dependencies**: Task 4, 5, 8
-**Output**: High-quality image processing system with JPEG conversion and review integration
-
-### Task 10: Translation Integration
-
-- [ ] Set up OpenAI API for translation
+- [ ] Set up OpenAI API integration
 - [ ] Create translation functions for product names
 - [ ] Implement description translation with context
-- [ ] Add translation quality validation
-- [ ] Create translation caching to avoid duplicate costs
+- [ ] Add translation caching to avoid duplicate costs
 - [ ] Handle translation errors and fallbacks
+- [ ] Store both original and translated content
+- [ ] Add translation quality validation
+- [ ] Create simple review interface for translations
+
+**Translation Features:**
+- Context-aware German translations
+- Caching to reduce API costs
+- Quality validation and review
+- Fallback error handling
+
+**Dependencies**: Task 5
+**Output**: Reliable German translation system
+
+### Task 7: Gambio CSV Export
+
+- [ ] Implement exact Gambio 4.4.0.4 CSV format
+- [ ] Create comprehensive field mapping
+- [ ] Add "Neu: LawnFawn > PD-neu" category assignment
+- [ ] Include EUR pricing with tax class assignment
+- [ ] Generate JPEG image filename references
+- [ ] Create UTF-8 encoding with pipe delimiters
+- [ ] Add all required fields (XTSOL, p_model, p_shortdesc.de/en)
+- [ ] Generate export package with images and instructions
+
+**Gambio Requirements:**
+- UTF-8 without BOM, pipe delimiter, double quote qualifier
+- Required fields: XTSOL, p_model, p_shortdesc.de, p_shortdesc.en
+- Category format: "Neu: LawnFawn > PD-neu"
+- Image references: p_image, p_image.1, p_image.2, p_image.3
+- SEO URLs: rewrite_url.de with friendly slugs
+
+**Dependencies**: Task 6
+**Output**: Complete Gambio-compatible export system
+
+### Task 8: Simple Web Interface
+
+- [ ] Create basic React frontend
+- [ ] Build file upload component for CSV
+- [ ] Add processing status display
+- [ ] Create export download interface
+- [ ] Show processing progress and results
+- [ ] Add basic error display and handling
+- [ ] Create simple product review list
+- [ ] Add export package download
+
+**MVP UI Features:**
+- CSV upload with drag-and-drop
+- Processing status and progress
+- Results display with export download
+- Basic error handling and feedback
 
 **Dependencies**: Task 7
-**Output**: Translation system
+**Output**: Functional web interface for MVP
 
-### Task 11: SEO Generation System
+## Phase 2: Multi-Supplier Expansion
 
-- [ ] Implement SEO keyword generation
-- [ ] Create meta title and description generation
-- [ ] Build category-specific SEO templates
-- [ ] Generate alt text for images
-- [ ] Implement SEO quality scoring
-- [ ] Create SEO preview functionality
+**Goal**: Complete supplier coverage with intelligent matching
+**Success Criteria**: Handle all 3 suppliers with different data formats and matching strategies
+
+### Task 9: Supplier Abstraction Layer
+
+- [ ] Create supplier configuration system
+- [ ] Build pluggable matching strategies
+- [ ] Implement supplier-specific parsers
+- [ ] Add confidence scoring framework
+- [ ] Create supplier management interface
+- [ ] Build universal processing pipeline
+- [ ] Add supplier-specific error handling
+- [ ] Test framework with multiple suppliers
+
+**Abstraction Features:**
+- Configuration-driven supplier setup
+- Pluggable matching algorithms
+- Universal confidence scoring
+- Supplier-specific customization
+
+**Dependencies**: Task 8
+**Output**: Flexible supplier framework
+
+### Task 10: Craftlines Integration
+
+- [ ] Add Craftlines supplier configuration
+- [ ] Implement code/EAN-based matching
+- [ ] Build direct code lookup strategy
+- [ ] Add search fallback for failed lookups
+- [ ] Handle German/English content
+- [ ] Set confidence scoring thresholds
+- [ ] Test with Craftlines data
+- [ ] Add Craftlines-specific error handling
+
+**Craftlines Strategy:**
+- Primary: Direct code lookup
+- Fallback: Search with product code
+- Confidence: Code match (95%), Search (80%), Name (60%)
+
+**Dependencies**: Task 9
+**Output**: Working Craftlines integration
+
+### Task 11: Mama Elephant Integration
+
+- [ ] Add Mama Elephant supplier configuration
+- [ ] Implement name-based fuzzy matching
+- [ ] Build website search functionality
+- [ ] Add similarity scoring algorithms
+- [ ] Create manual review workflow for uncertain matches
+- [ ] Handle invoice format parsing
+- [ ] Set lower confidence thresholds
+- [ ] Add extensive fallback strategies
+
+**Mama Elephant Strategy:**
+- Primary: Website search with exact name
+- Secondary: Fuzzy name matching
+- Tertiary: Manual URL entry
+- Confidence: Exact (75%), Fuzzy (40-70%), Manual (100%)
 
 **Dependencies**: Task 10
-**Output**: SEO generation system
+**Output**: Working Mama Elephant integration with review workflow
 
-## Phase 3: Export & Integration (Weeks 6-7)
+### Task 12: Enhanced Review System
 
-### Task 12: Enhanced Gambio CSV Export
+- [ ] Create unified review dashboard
+- [ ] Build confidence score visualization
+- [ ] Add manual URL entry capability
+- [ ] Implement bulk review operations
+- [ ] Create image quality review interface
+- [ ] Add manual image upload functionality
+- [ ] Build review queue management
+- [ ] Add user feedback and learning system
 
-- [ ] Research exact Gambio CSV format requirements
-- [ ] Create Gambio CSV template mapping with URL fields
-- [ ] Implement dual category export (IMPORT + supplier categories)
-- [ ] Add product URL generation for both domains (.at/.de)
-- [ ] Implement CSV generation with proper formatting
-- [ ] Add validation for Gambio-specific requirements
-- [ ] Create export packaging (CSV + JPEG images + URLs)
-- [ ] Include image quality warnings in export logs
-- [ ] Test with sample Gambio import including URLs and categories
+**Review Features:**
+- Confidence-based flagging
+- Manual override capabilities
+- Bulk operations for efficiency
+- Image quality assessment
+- User feedback loop
 
-**Dependencies**: Task 2, 2.5, 8, 9, 10, 11
-**Output**: Enhanced Gambio-compatible export system with URLs and categories
+**Dependencies**: Task 11
+**Output**: Comprehensive review and validation system
 
-### Task 13: Frontend Development - Universal UI
+### Task 13: Cross-Supplier Features
 
-- [ ] Set up React project with TypeScript and universal architecture
-- [ ] Create basic layout and navigation with supplier selection
-- [ ] Implement universal file upload component (CSV, Excel, PDF, manual)
-- [ ] Build supplier management interface
-- [ ] Create universal review dashboard (matches, images, duplicates)
-- [ ] Build product management interface with filtering and search
-- [ ] Create export configuration UI
-- [ ] Add progress tracking and status display for all operations
-- [ ] Implement bulk review operations interface
-- [ ] Add real-time notifications and updates
+- [ ] Implement duplicate detection across suppliers
+- [ ] Build similarity scoring for products
+- [ ] Create duplicate resolution interface
+- [ ] Add cross-supplier analytics
+- [ ] Implement unified export system
+- [ ] Create supplier comparison tools
+- [ ] Add batch processing optimizations
+- [ ] Test with mixed supplier data
 
-**Dependencies**: Task 1, 2.5, 5
-**Output**: Complete universal frontend application
+**Cross-Supplier Features:**
+- Duplicate detection and resolution
+- Unified processing pipeline
+- Supplier performance analytics
+- Mixed batch processing
 
-### Task 14: Universal API Development
+**Dependencies**: Task 12
+**Output**: Complete multi-supplier system
 
-- [ ] Set up FastAPI backend structure with universal architecture
-- [ ] Create supplier management endpoints
-- [ ] Implement universal file upload endpoints
-- [ ] Build product matching and review endpoints
-- [ ] Create duplicate detection and resolution endpoints
-- [ ] Implement product CRUD operations with supplier context
-- [ ] Build processing pipeline endpoints
-- [ ] Create export endpoints
-- [ ] Add authentication and role-based security
-- [ ] Implement real-time WebSocket connections for progress updates
+## Phase 3: Production Ready
 
-**Dependencies**: Task 2, 4, 5, 6, 7, 9, 10, 11, 12
-**Output**: Complete universal API backend
+**Goal**: Business-ready system with reliability and polish
+**Success Criteria**: Dependable automation suitable for daily operations
 
-### Task 15: Comprehensive Integration Testing
+### Task 14: Error Handling & Resilience
 
-- [ ] Test end-to-end workflow with all three suppliers
-- [ ] Validate universal file processing (CSV, Excel, PDF, manual)
-- [ ] Test product matching accuracy across all suppliers
-- [ ] Verify confidence scoring and review system functionality
-- [ ] Test duplicate detection across suppliers
-- [ ] Validate image review and manual upload system
-- [ ] Test dual category assignment (IMPORT + supplier categories)
-- [ ] Verify URL generation for both domains (.at/.de)
-- [ ] Test image quality validation and JPEG conversion
-- [ ] Validate translation quality and accuracy
-- [ ] Verify Gambio import compatibility with all features
-- [ ] Performance testing with large datasets (up to 100 products)
-- [ ] Test review workflow efficiency and user experience
-- [ ] Validate cross-supplier analytics and reporting
-
-**Dependencies**: Task 12, 13, 14
-**Output**: Fully tested universal system with all features validated
-
-## Phase 4: Polish & Optimization (Weeks 8-9)
-
-### Task 16: Error Handling & Resilience
-
-- [ ] Implement comprehensive error handling across all systems
-- [ ] Add retry mechanisms for failed operations (scraping, API calls, file processing)
+- [ ] Implement comprehensive error handling
+- [ ] Add retry mechanisms for failed operations
 - [ ] Create detailed error logging and monitoring
 - [ ] Build graceful degradation for API failures
 - [ ] Add data backup and recovery procedures
 - [ ] Implement error notification system
 - [ ] Create error recovery workflows
-- [ ] Test system resilience under various failure scenarios
+- [ ] Test system resilience under failure scenarios
 
-**Dependencies**: All previous tasks
-**Output**: Robust error handling and resilience system
+**Resilience Features:**
+- Automatic retry with exponential backoff
+- Graceful degradation for service failures
+- Comprehensive error logging
+- Data backup and recovery
 
-### Task 17: Performance Optimization
+**Dependencies**: Task 13
+**Output**: Robust, resilient system
+
+### Task 15: Performance Optimization
 
 - [ ] Optimize database queries and indexing
-- [ ] Implement comprehensive caching strategies (Redis)
-- [ ] Add batch processing optimizations for large datasets
-- [ ] Optimize image processing pipeline for speed and memory
-- [ ] Add progress indicators and async processing for all operations
-- [ ] Implement connection pooling and resource management
-- [ ] Optimize frontend performance and loading times
+- [ ] Implement comprehensive caching strategies
+- [ ] Add batch processing optimizations
+- [ ] Optimize image processing pipeline
+- [ ] Add progress indicators and async processing
+- [ ] Implement connection pooling
+- [ ] Optimize frontend performance
 - [ ] Add performance monitoring and metrics
 
-**Dependencies**: All previous tasks
-**Output**: Optimized high-performance system
+**Performance Features:**
+- Database query optimization
+- Redis caching for frequently accessed data
+- Async processing for long-running tasks
+- Performance monitoring and alerting
 
-### Task 18: Documentation & Deployment
+**Dependencies**: Task 14
+**Output**: High-performance, scalable system
 
-- [ ] Create comprehensive user documentation with screenshots
-- [ ] Write detailed API documentation with examples
-- [ ] Create deployment guides for various environments
-- [ ] Set up production environment with monitoring
+### Task 16: Documentation & Deployment
+
+- [ ] Create comprehensive user documentation
+- [ ] Write API documentation with examples
+- [ ] Create deployment guides
+- [ ] Set up production environment
 - [ ] Create backup and disaster recovery procedures
 - [ ] Write system administration guides
 - [ ] Create troubleshooting documentation
 - [ ] Add system monitoring and alerting
 
-**Dependencies**: All previous tasks
+**Documentation Features:**
+- User guides with screenshots
+- Technical documentation
+- Deployment and operations guides
+- Troubleshooting resources
+
+**Dependencies**: Task 15
 **Output**: Production-ready system with complete documentation
 
-## Immediate Next Steps
+## Success Criteria by Phase
 
-### 1. Environment Setup (Day 1)
-- Install Python 3.9+, Node.js 18+
-- Set up PostgreSQL database
-- Create project repository
-- Get API keys for Firecrawl, OpenAI
+### Phase 1 Success Metrics
+- [ ] Process 50 Lawn Fawn products in under 30 minutes
+- [ ] 90%+ time reduction vs manual process
+- [ ] All images converted to JPEG with quality validation
+- [ ] German translations with 95%+ accuracy
+- [ ] Gambio CSV import works without errors
+- [ ] Simple web interface functional and intuitive
 
-### 2. Database Design (Day 2)
-- Finalize database schema
-- Create migration scripts
-- Set up development database
+### Phase 2 Success Metrics
+- [ ] All 3 suppliers supported with appropriate matching strategies
+- [ ] Confidence scoring accurately identifies uncertain matches
+- [ ] Review workflow efficiently handles edge cases
+- [ ] Cross-supplier duplicate detection prevents duplicates
+- [ ] System handles mixed supplier batches reliably
+- [ ] Processing accuracy >95% across all suppliers
 
-### 3. CSV Analysis (Day 3)
-- Deep dive into provided CSV files
-- Create parsing utilities
-- Test with sample data
+### Phase 3 Success Metrics
+- [ ] System handles 100+ products per batch reliably
+- [ ] Error recovery works for all failure scenarios
+- [ ] Performance acceptable for daily production use
+- [ ] Documentation enables independent operation
+- [ ] Monitoring provides visibility into system health
+- [ ] Backup and recovery procedures tested and verified
 
-### 4. Scraping Research (Day 4-5)
-- Analyze LawnFawn website structure
-- Analyze Craftlines website structure
-- Test Firecrawl API integration
-- Document scraping strategy
+## Value Delivery Timeline
 
-## Success Criteria for Phase 1
+### Phase 1 Value
+- **Immediate**: First Lawn Fawn batch processed successfully
+- **Short-term**: Reliable daily Lawn Fawn automation
+- **Measurable**: 90% time reduction for Lawn Fawn products
 
-### Universal Foundation Milestones
-- [ ] Complete universal database schema created and tested (all tables and relationships)
-- [ ] Universal supplier framework operational with all three suppliers configured
-- [ ] Universal file processing system supporting CSV, Excel, PDF, and manual entry
-- [ ] Universal product matching system with confidence scoring working
-- [ ] Universal review and validation system functional
-- [ ] Cross-supplier duplicate detection operational
-- [ ] Development environment fully configured for universal architecture
+### Phase 2 Value
+- **Immediate**: Craftlines and Mama Elephant support
+- **Short-term**: Complete supplier coverage
+- **Measurable**: All suppliers automated with quality review
 
-### Quality Gates
-- [ ] All code reviewed and tested with universal patterns
-- [ ] Database migrations work correctly for all new tables
-- [ ] Supplier framework extensibility validated
-- [ ] Review system workflow tested with mixed data
-- [ ] Error handling implemented across all systems
-- [ ] Documentation updated for universal architecture
-
-## Success Criteria for Complete Universal System
-
-### Universal System Validation
-- [ ] Supplier management system working (add/configure/manage suppliers)
-- [ ] Universal file upload and processing working for all formats
-- [ ] Product matching working across all three suppliers with confidence scoring
-- [ ] Review system handling uncertain matches, images, and duplicates effectively
-- [ ] Cross-supplier duplicate detection and resolution working
-- [ ] Universal export system generating consistent Gambio output
-- [ ] URL generation working for both domains (stempelwunderwelt.at/.de)
-- [ ] Dual category assignment (IMPORT + supplier) functioning universally
-
-### Advanced Feature Validation
-- [ ] Image quality validation (≥1000px) with fallback warnings and manual upload
-- [ ] JPEG conversion working for all image formats from all suppliers
-- [ ] Multi-domain URL uniqueness validation across suppliers
-- [ ] Translation system working with context awareness
-- [ ] SEO generation producing quality keywords and meta tags
-- [ ] Review queue management with prioritization and bulk operations
-- [ ] User feedback loop improving matching accuracy over time
-
-### Integration Success Metrics
-- [ ] End-to-end workflow processes data from all suppliers correctly
-- [ ] Generated URLs are SEO-friendly and conflict-free across suppliers
-- [ ] Image processing meets quality standards with proper fallbacks
-- [ ] Gambio import accepts enhanced CSV format with all features
-- [ ] Category structure properly maintained in export for all suppliers
-- [ ] System handles variations in data quality gracefully
-- [ ] Review workflow is efficient and user-friendly
-- [ ] Duplicate detection prevents cross-supplier duplicates effectively
-- [ ] Performance acceptable with up to 100 products per batch
-- [ ] System is easily extensible for new suppliers
-
-### Scalability and Maintainability
-- [ ] New suppliers can be added through configuration without code changes
-- [ ] System performance scales appropriately with data volume
-- [ ] Error handling provides clear feedback and recovery options
-- [ ] Documentation enables new team members to understand and extend the system
-- [ ] Monitoring and logging provide visibility into system operations
-- [ ] Backup and recovery procedures protect against data loss
+### Phase 3 Value
+- **Immediate**: Production reliability and performance
+- **Short-term**: Business-ready daily operations
+- **Measurable**: Dependable automation for all workflows
 
 ## Risk Mitigation
 
 ### Technical Risks
-- **Supplier website changes**: Monitor for structural changes, implement flexible selectors
-- **API rate limits**: Implement respectful scraping with delays and caching
-- **Translation accuracy**: Plan for manual review workflow
+- **Supplier website changes**: Flexible scraping with fallbacks
+- **API rate limits**: Respectful scraping with delays and caching
+- **Translation quality**: Review workflow and quality validation
+- **Image quality**: Validation with manual upload fallback
 
-### Timeline Risks
-- **Complexity underestimation**: Build MVP first, then enhance
-- **API integration challenges**: Have fallback plans for each service
-- **Data quality issues**: Implement validation at each step
+### Business Risks
+- **Supplier relations**: Compliant scraping practices
+- **Data accuracy**: Comprehensive validation and review
+- **System reliability**: Robust error handling and monitoring
+- **User adoption**: Intuitive interface and comprehensive documentation
 
-## Resources Needed
+## Architecture Principles
 
-### APIs & Services
-- Firecrawl API key
-- OpenAI API key (or alternative translation service)
-- Development server for testing
+### Build for Iteration
+- Start simple, add complexity as needed
+- Modular design for easy extension
+- Configuration over hardcoding
+- Test early and often
 
-### Tools & Software
-- PostgreSQL database
-- Redis for caching
-- Python development environment
-- Node.js for frontend
-- Git repository
+### Focus on Value
+- Deliver working features over perfect architecture
+- Prioritize user feedback and iteration
+- Measure success by time savings and accuracy
+- Build for the current phase, design for the future
 
-### Sample Data
-- LawnFawn CSV file (provided)
-- Craftlines CSV file (provided)
-- Sample product URLs for testing
+### Quality Standards
+- Maintain image quality standards (≥1000px)
+- Ensure translation accuracy and review
+- Validate all data before export
+- Provide clear error messages and recovery

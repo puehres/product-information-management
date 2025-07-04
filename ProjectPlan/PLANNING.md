@@ -1,51 +1,78 @@
-# Universal Product Automation System for Stempelwunderwelt.at
+# Product Automation System for Stempelwunderwelt.at
 
 ## Project Overview
-Build a comprehensive, supplier-agnostic webapp to automate product import from any supplier to Gambio webshop, eliminating manual data entry and image handling while ensuring German translations and SEO optimization.
+Build a lean, iterative product automation system to eliminate manual product import processes for craft suppliers (Lawn Fawn, Craftlines, Mama Elephant) into Gambio webshop, delivering immediate value with each iteration.
 
 ## Core Problem Statement
 Currently, adding products to the Gambio webshop requires:
-- Manual data entry from various supplier formats (CSV, invoices, catalogs)
-- Manual product matching and URL detection
+- Manual data entry from supplier CSV files and invoices
+- Manual product URL discovery and matching
 - Manual image downloading and processing
 - Manual translation from English to German
-- Manual SEO optimization
-- Manual duplicate detection across suppliers
+- Manual SEO optimization and category assignment
 - Manual creation of Gambio import files
 
-## Universal Solution Architecture
+**Time Impact**: 5+ hours for 50 products → Target: 30 minutes with automation
 
-### High-Level Universal System Flow
-1. **Supplier Selection**: Choose from configured suppliers or add new ones
-2. **File Upload**: Flexible input (CSV, Excel, PDF, manual) with auto-detection
-3. **Product Matching**: Universal matching system with confidence scoring
-4. **Review & Validation**: Unified review system for uncertain matches, images, duplicates
-5. **Enrichment**: Web scraping → Product details + images + metadata
-6. **Categorization**: Dual category assignment (IMPORT + supplier-specific)
-7. **URL Generation**: Create unique Gambio product URLs based on taxonomy
-8. **Processing**: Translation + SEO optimization + high-quality image processing
-9. **Export**: Gambio-compatible CSV + organized image folders + product URLs
+## Three-Phase Development Strategy
 
-### Universal Processing Pipeline
+### **Phase 1: MVP - Lawn Fawn → Gambio**
+**Goal**: Prove core value with single supplier automation
+**Value**: Process 50 Lawn Fawn products in 30 minutes vs 5 hours manually
+
+**Core Pipeline:**
 ```
-Supplier Selection → File Upload → Identifier Extraction → Product Matching
-    ↓
-Confidence Scoring → Review Queue (uncertain matches, missing images, duplicates)
-    ↓
-User Review & Validation → Product Enrichment → Standard Pipeline
-    ↓
-Translation → Categorization → URL Generation → Image Processing → Export
+Lawn Fawn CSV → SKU Matching → Product Scraping → Image Processing → 
+German Translation → Gambio CSV Export
 ```
+
+**Key Features:**
+- Lawn Fawn CSV upload and parsing
+- SKU-based product URL construction and scraping
+- Basic image download and JPEG conversion
+- OpenAI-powered German translation
+- Gambio 4.4.0.4 CSV export with proper formatting
+- Simple web interface for upload/download
+
+### **Phase 2: Multi-Supplier Expansion**
+**Goal**: Complete supplier coverage with intelligent matching
+**Value**: Handle all 3 suppliers with different data formats and matching strategies
+
+**Enhanced Pipeline:**
+```
+Multi-Supplier Input → Intelligent Matching → Quality Review → 
+Enhanced Processing → Unified Export
+```
+
+**Key Features:**
+- Craftlines support (code-based matching)
+- Mama Elephant support (name-based fuzzy matching)
+- Supplier abstraction layer
+- Review workflow for uncertain matches
+- Cross-supplier duplicate detection
+- Enhanced image quality validation
+
+### **Phase 3: Production Ready**
+**Goal**: Business-ready system with reliability and polish
+**Value**: Dependable automation suitable for daily operations
+
+**Production Features:**
+- Comprehensive error handling and recovery
+- Performance optimization for large batches
+- User documentation and training materials
+- Monitoring and logging systems
+- Backup and data protection
 
 ### Technology Stack
 
 #### Backend
 - **Framework**: Python FastAPI or Node.js Express
-- **Database**: PostgreSQL for structured data + Redis for caching
+- **Database**: Supabase PostgreSQL (eu-central-1, Frankfurt) for structured data
+- **Caching**: Upstash Redis (free tier) for session storage and translation caching
 - **Web Scraping**: Firecrawl API for reliable, enterprise-grade scraping
 - **Translation**: Google Translate API or OpenAI GPT-4 for context-aware translations
-- **Image Processing**: Pillow (Python) or Sharp (Node.js) for optimization
-- **File Storage**: Local filesystem with organized folder structure
+- **Image Processing**: Pillow (Python) for in-memory processing and JPEG conversion
+- **Cloud Storage**: AWS S3 (eu-central-1, Frankfurt) for image processing pipeline
 
 #### Frontend
 - **Framework**: React with TypeScript
@@ -56,8 +83,100 @@ Translation → Categorization → URL Generation → Image Processing → Expor
 #### APIs & Services
 - **Firecrawl**: Web scraping with JavaScript rendering
 - **OpenAI GPT**: Product descriptions, translations, SEO tags
-- **Google Translate**: Fallback translation service
-- **Image CDN**: Optional future enhancement
+- **AWS S3**: Image storage and processing pipeline
+- **boto3**: AWS SDK for Python S3 integration
+- **Supabase**: PostgreSQL database with real-time features
+- **Upstash**: Redis caching (free tier)
+
+## Database Architecture
+
+### **Supabase PostgreSQL (Cost-Effective Choice)**
+**Decision**: Use Supabase instead of AWS RDS for significant cost savings
+**Region**: eu-central-1 (Frankfurt) for optimal German user performance
+
+### **Cost Comparison**
+- **AWS RDS + ElastiCache**: ~$28/month for MVP
+- **Supabase + Upstash**: $0/month for MVP (free tiers)
+- **Savings**: $336/year during development phase
+
+### **Supabase Free Tier Benefits**
+- **Database**: 500MB PostgreSQL storage (sufficient for MVP)
+- **Bandwidth**: 2GB/month data transfer
+- **Real-time**: WebSocket subscriptions included
+- **Auth**: 50,000 monthly active users
+- **Storage**: 1GB file storage (alternative to S3 if needed)
+- **Edge Functions**: 500,000 invocations/month
+
+### **Development Setup**
+```python
+# Supabase Configuration
+from supabase import create_client, Client
+
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_ANON_KEY")
+supabase: Client = create_client(url, key)
+
+# Standard PostgreSQL connection also works
+DATABASE_URL = os.environ.get("SUPABASE_DATABASE_URL")
+```
+
+### **Scaling Path**
+- **MVP**: Free tier ($0/month)
+- **Production**: Pro tier ($25/month when needed)
+- **Features**: Same PostgreSQL functionality + real-time updates
+- **Migration**: Standard PostgreSQL migrations work seamlessly
+
+### **Redis Caching (Upstash)**
+- **Free Tier**: 10,000 commands/day, 256MB storage
+- **Purpose**: Translation caching, session storage, processing queues
+- **Serverless**: Pay-per-use model, no idle costs
+- **Global**: Low-latency worldwide access
+
+## Image Storage Architecture
+
+### **Cloud-First Processing Pipeline**
+**Decision**: Use AWS S3 for image processing, not local storage or hosting
+**Purpose**: Temporary processing workspace → Download package → Manual FTP to Gambio
+
+### **S3 Configuration (eu-central-1)**
+- **Region**: Frankfurt for optimal performance with German users
+- **Bucket Structure**: Organized processing and export folders
+- **Access**: Private bucket with presigned URLs for downloads
+- **Lifecycle**: Automatic cleanup to minimize costs
+
+### **Processing Workflow**
+```
+Supplier URLs → S3 Processing → JPEG Conversion → Export Package → User Download → FTP to Gambio
+```
+
+### **S3 Bucket Organization**
+```
+s3://product-processing-bucket/
+├── processing/{batch_id}/
+│   ├── raw/                    # Original downloaded images
+│   └── processed/              # Converted JPEG images
+└── exports/{export_date}/
+    ├── gambio_import.csv       # Gambio-compatible CSV
+    └── images/                 # All JPEG files for FTP upload
+```
+
+### **Export Package Generation**
+- **Format**: ZIP file with CSV + images folder
+- **Download**: Time-limited presigned URLs (24 hours)
+- **Content**: Gambio CSV + organized JPEG files + import instructions
+- **User Workflow**: Download → Import CSV to Gambio → FTP images to server
+
+### **Cost Optimization**
+- **Lifecycle Policies**: Auto-delete processing files (7 days), exports (30 days)
+- **Minimal Storage**: Only active processing and recent exports
+- **Estimated Cost**: <$0.05/month for MVP scale (1000 products, 3 images each)
+- **No CDN**: Direct S3 URLs for download packages only
+
+### **Quality Standards**
+- **Format**: All images converted to JPEG for Gambio compatibility
+- **Dimensions**: Minimum 1000px on longest edge (with quality warnings)
+- **Naming**: Standardized {SKU}_{type}_{sequence}.jpeg format
+- **Processing**: In-memory conversion, no local file storage
 
 ## Universal Supplier Framework
 
@@ -132,7 +251,8 @@ Translation → Categorization → URL Generation → Image Processing → Expor
 - `original_description`: English description
 - `german_description`: German description
 - `category`: Product category
-- `price`: Product price
+- `supplier_price_eur`: EUR pricing from supplier
+- `tax_class_id`: Foreign key to tax_classes
 - `stock_info`: Stock information
 - `seo_keywords`: Generated SEO keywords
 - `meta_title`: SEO meta title
@@ -140,8 +260,8 @@ Translation → Categorization → URL Generation → Image Processing → Expor
 - `gambio_url_slug`: SEO-friendly URL slug
 - `gambio_url_at`: Full stempelwunderwelt.at URL
 - `gambio_url_de`: Full stempelwunderwelt.de URL
-- `primary_category`: Always 'IMPORT'
-- `supplier_category`: Dynamic supplier category (e.g., 'NEW → Lawn Fawn')
+- `gambio_category_primary`: "Neu: [Manufacturer]" category
+- `gambio_category_secondary`: "PD-neu" category
 - `category_path`: Full category hierarchy for URL generation
 - `min_image_dimension`: Minimum image dimension found
 - `image_quality_warning`: Flag for substandard images
@@ -217,6 +337,17 @@ Translation → Categorization → URL Generation → Image Processing → Expor
 - `created_at`: Queue entry timestamp
 - `completed_at`: Review completion timestamp
 
+#### Tax_Classes Table (New)
+- `id`: Primary key
+- `country_code`: Country code (AT, DE, etc.)
+- `tax_rate`: VAT percentage (20.0, 19.0, etc.)
+- `gambio_tax_class_id`: Gambio's internal tax class ID
+- `description`: Human-readable description (e.g., "Austria Standard VAT")
+- `is_default`: Boolean flag for default tax class per country
+- `active`: Boolean flag for enabled tax classes
+- `created_at`: Creation timestamp
+- `updated_at`: Last update timestamp
+
 ### Product Naming Taxonomy
 
 #### SKU Generation
@@ -288,24 +419,44 @@ Translation → Categorization → URL Generation → Image Processing → Expor
 - **Categories**: Varies by sub-brand and product type
 
 ### 2. Lawn Fawn (lawnfawn.com)
-**Available Data from File:**
-- SKU codes (primary identifier)
-- Product names
-- Basic product information
-- Possibly collection/series info
+**Available Data from Invoice (Primary Input):**
+- **LF SKU**: Primary identifier (format: "LF3242")
+- **Product Names**: Basic product names from invoice
+- **USD Pricing**: Actual purchase prices in USD
+- **Quantities**: Ordered quantities for inventory tracking
+- **Invoice Metadata**: Invoice number, date, line items
+
+**Available Data from Product Release CSV (Fallback):**
+- **LF SKU**: Primary identifier (format: "LF3242")
+- **Product Names**: Complete product names for translation
+- **Descriptions**: Detailed product descriptions available
+- **MSRP**: Pricing information for comparison
+- **Tags**: Category/classification data
+- **Barcode**: Additional validation identifier
 
 **Missing Data (Needs Scraping):**
 - Product images (main + detail shots)
-- Detailed descriptions
+- Enhanced product descriptions
 - Product categories (stamps, dies, papers, etc.)
-- Pricing information
 - Usage examples/inspiration images
-- Product specifications
+- Technical specifications
+
+**Input Processing Strategy:**
+- **Primary Input**: PDF invoices (business-driven workflow)
+- **Fallback Input**: CSV product release lists
+- **PDF Parsing**: Extract table data with SKU, name, price, quantity
+- **Currency Conversion**: USD → EUR conversion for pricing
+- **Single Invoice Processing**: One invoice upload at a time
 
 **Scraping Strategy:**
-- **Primary Method**: Direct SKU-based URL construction
-- **Fallback**: Category browsing + name matching
-- **Confidence**: HIGH (reliable SKU system)
+- **Primary Method**: SKU-based search using Lawn Fawn's search functionality
+- **Search Pattern**: Extract numeric SKU from LF number (LF3242 → 3242)
+- **Search URL**: `https://www.lawnfawn.com/search?options%5Bprefix%5D=last&q={sku}&filter.p.product_type=`
+- **Result Processing**: Parse search results to extract actual product URLs
+- **Confidence**: HIGH (95% for unique SKU matches, 80% for multiple results)
+- **Data Enrichment**: Combine minimal invoice data with comprehensive scraped data
+- **Pricing Strategy**: Use actual purchase price, store MSRP as reference
+- **Fallback**: Manual review for failed searches
 - **Image Types**: Main product, packaging, usage examples
 - **Categories**: Stamps, Dies, Papers, Stencils, Ink, Tools
 
@@ -420,32 +571,83 @@ Translation → Categorization → URL Generation → Image Processing → Expor
 
 ## Gambio Integration
 
-### CSV Import Format
-Based on Gambio documentation, the import CSV requires:
-- Product ID/SKU
-- Product name (German)
-- Description (German)
-- Dual category assignment (IMPORT + supplier category)
-- Generated product URLs (stempelwunderwelt.at/.de)
-- Price
-- Stock quantity
-- Images (referenced by filename, all .jpeg format)
-- SEO meta data
-- Product attributes
+### CSV + Images Import Approach (Gambio 4.4.0.4)
+Based on comprehensive analysis and Gambio documentation, the system uses CSV + Images import:
 
-### Enhanced Image Requirements
-- **Format**: All images converted to JPEG for consistency
-- **Quality**: Minimum 1000px on longest edge (with fallback warnings)
+#### **Core CSV Import Requirements:**
+- **Format**: UTF-8 without BOM encoding
+- **Delimiter**: Pipe symbol `|` (recommended)
+- **Text Qualifier**: Double quotes `"`
+- **Required Fields**: XTSOL, p_model, p_shortdesc.de, p_shortdesc.en (even if just spaces)
+- **Image References**: Exact JPEG filenames in CSV, actual files uploaded separately
+
+#### **Enhanced Gambio CSV Field Mapping:**
+```
+XTSOL: "XTSOL" (required control character)
+p_model: Internal SKU (e.g., LF-STAMP-001)
+p_name.de: German translated product name
+p_desc.de: German translated description
+p_shortdesc.de: German short description (required field)
+p_shortdesc.en: English short description (required field)
+p_cat.de: "Neu: [Manufacturer] > PD-neu"
+p_priceNoTax: EUR net price from supplier
+p_tax: Configurable tax class ID (multi-country support)
+p_image: Main JPEG filename (e.g., LF-STAMP-001_main_01.jpeg)
+p_image.1: Additional JPEG filename
+p_image.2: Additional JPEG filename
+p_image.3: Additional JPEG filename
+p_status: 1 (active product)
+rewrite_url.de: SEO-friendly URL slug
+p_img_alt_text.de: German alt text for main image
+p_img_alt_text.1.de: German alt text for additional images
+```
+
+#### **Multi-Country Tax Class System:**
+- **Tax Classes Table**: Support for AT, DE, and other countries
+- **Configurable VAT Rates**: 20% (AT), 19% (DE), etc.
+- **Dynamic Assignment**: Products assigned appropriate tax class based on configuration
+- **Admin Interface**: Manage tax class mappings per country
+
+#### **Enhanced Image Processing & Upload:**
+- **Format**: All images converted to JPEG for Gambio compatibility
+- **Quality**: Minimum 1000px on longest edge (with quality warnings for substandard images)
 - **Naming**: Standardized {SKU}_{type}_{sequence}.jpeg format
-- **Alt text**: SEO-optimized descriptions in German
-- **Folder structure**: Organized by category hierarchy
-- **Quality assurance**: Validation and warning system for substandard images
+- **Upload Location**: `/images/product_images/original_images/` via FTP
+- **Batch Processing**: Manual trigger in Gambio admin (Settings > Layout & Design > Image Processing)
+- **Generated Sizes**: Gambio automatically creates thumbnails, info images, popup images, mobile versions
+- **Alt Text**: SEO-optimized German descriptions for all images
 
-### Category Structure
-- **Primary Category**: Always "IMPORT" for all products
-- **Secondary Category**: Dynamic supplier categories (e.g., "NEW → Lawn Fawn")
+#### **Refined Category Structure:**
+- **Primary Category**: "Neu: [Manufacturer]" (e.g., "Neu: LawnFawn", "Neu: Craftlines", "Neu: Mama Elephant")
+- **Secondary Category**: "PD-neu" (all products also assigned here)
+- **CSV Format**: `p_cat.de: "Neu: LawnFawn > PD-neu"`
+- **Assumption**: Categories pre-exist in Gambio system
 - **URL Integration**: Categories used for SEO-friendly URL generation
 - **Hierarchy**: Support for nested category structures
+
+#### **Export Package Structure:**
+```
+/exports/{batch_date}/
+├── gambio_import.csv (Gambio 4.4.0.4 format)
+├── /images/
+│   └── /product_images/
+│       └── /original_images/
+│           ├── LF-STAMP-001_main_01.jpeg
+│           ├── LF-STAMP-001_detail_01.jpeg
+│           ├── CL-DIES-042_main_01.jpeg
+│           └── [all optimized JPEG images]
+├── import_instructions.md (step-by-step Gambio admin guide)
+├── batch_processing_guide.md (image processing instructions)
+├── validation_checklist.md (import validation steps)
+└── export_summary.json (batch processing summary)
+```
+
+#### **Post-Import Process:**
+1. **CSV Import**: Upload and import CSV file in Gambio admin
+2. **Image Upload**: FTP upload all JPEG images to correct directory
+3. **Batch Processing**: Manual trigger in Gambio admin to generate image variants
+4. **Validation**: Verify products, categories, images, and pricing
+5. **Quality Check**: Review imported products for completeness
 
 ## Risk Mitigation
 
