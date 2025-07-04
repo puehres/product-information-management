@@ -25,8 +25,17 @@
 - **Check `TASK.md`** before starting a new task. If the task isn't listed, add it with a brief description and today's date.
 - **Use consistent naming conventions, file structure, and architecture patterns** as described in `PLANNING.md`.
 - **Follow the technology stack** specified in the planning document - don't introduce new technologies without discussion.
-- **Follow the Enhanced Workflow** as documented in `docs/enhanced_workflow.md` for all development tasks.
-- **Use the provided templates** in `PRPs/templates/` for PRP generation, review, and completion.
+- **Follow the 7-Step Development Workflow** for all development tasks (automated via MCP server):
+  1. Planning Phase (PLANNING.md + TASK.md)
+  2. Feature Specification (features/taskX.md)
+  3. PRP Generation (PRPs/taskX.md) - *Auto-creates review file*
+  4. PRP Review (PRPs/taskX-review.md) - *Quality validation before execution*
+  5. PRP Execution - *Auto-creates completion file*
+  6. Task Completion (PRPs/taskX-completion.md) - *Structured completion verification*
+  7. Documentation Sync - *Update all relevant documentation*
+- **Templates are automatically applied** by the MCP server during PRP generation and execution.
+- **PRP Review is mandatory** - all PRPs must be reviewed before execution for quality validation.
+- **PRP Completion is mandatory** - all executed PRPs must have completion documentation.
 - **Maintain interface documentation** in `docs/interfaces/` when implementing new features.
 
 ### 🧱 Code Structure & Modularity

@@ -57,13 +57,33 @@ uv run pytest tests/ -v
 ## Output
 Save as: `PRPs/{feature-name}.md`
 
+## Automated Template Creation
+After generating the main PRP file, automatically create the review template:
+
+1. **Create Review File**: Copy `PRPs/templates/prp_review_template.md` to `PRPs/{feature-name}-review.md`
+2. **Pre-populate Review File**:
+   - Fill in task name and PRP file path
+   - Set review date to current date
+   - Set reviewer as "AI Agent"
+3. **Perform Actual PRP Review**:
+   - Read and critically evaluate the PRP against each checklist item
+   - Mark checkboxes based on actual analysis (only check if criteria are genuinely met)
+   - Identify any gaps, missing context, or unclear instructions
+   - Assess technical risks and implementation feasibility
+   - Provide specific feedback in "Issues Identified" section for any problems found
+   - Give concrete recommendations in "Recommendations" section
+   - Make an informed approval decision (APPROVED/APPROVED WITH CONDITIONS/REJECTED)
+   - Fill in reviewer signature and approval date
+   - Ensure the review reflects genuine quality validation, not rubber-stamp approval
+
 ## Quality Checklist
 - [ ] All necessary context included
 - [ ] Validation gates are executable by AI
 - [ ] References existing patterns
 - [ ] Clear implementation path
 - [ ] Error handling documented
+- [ ] Review template created and pre-populated
 
 Score the PRP on a scale of 1-10 (confidence level to succeed in one-pass implementation using claude codes)
 
-Remember: The goal is one-pass implementation success through comprehensive context.
+Remember: The goal is one-pass implementation success through comprehensive context and mandatory quality review.
