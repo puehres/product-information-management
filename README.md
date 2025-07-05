@@ -132,25 +132,130 @@ product-information-management/
 
 ## ⚙️ Configuration
 
+### 🔒 Security Setup & Credential Management
+
+**⚠️ IMPORTANT: Never commit real credentials to version control!**
+
+#### Environment Variables Setup
+
+1. **Copy example files**:
+   ```bash
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env.local
+   ```
+
+2. **Configure credentials securely**:
+   - All sensitive data goes in `.env` files (git-ignored)
+   - Use placeholder patterns in example files
+   - Follow the setup guides below for each service
+
+#### Required Credentials
+
+##### Supabase Database Setup
+1. Visit [Supabase Dashboard](https://supabase.com/dashboard)
+2. Create new project in `eu-central-1` (Frankfurt) region
+3. Copy credentials to `backend/.env`:
+   ```bash
+   SUPABASE_URL=https://your-project-ref.supabase.co
+   SUPABASE_ANON_KEY=your-anon-key-here
+   SUPABASE_SERVICE_KEY=your-service-key-here
+   SUPABASE_DATABASE_URL=postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
+   ```
+
+##### AWS S3 Setup (for invoice processing)
+1. Visit [AWS Console](https://console.aws.amazon.com/s3/)
+2. Create S3 bucket in `eu-north-1` region
+3. Create IAM user with S3 access
+4. Copy credentials to `backend/.env`:
+   ```bash
+   AWS_ACCESS_KEY_ID=your_aws_access_key_id_here
+   AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key_here
+   AWS_REGION=eu-north-1
+   S3_BUCKET_NAME=your_s3_bucket_name_here
+   ```
+
+##### API Keys Setup
+1. **Firecrawl API**: Get key from [Firecrawl](https://firecrawl.dev)
+2. **OpenAI API**: Get key from [OpenAI Platform](https://platform.openai.com)
+3. Add to `backend/.env`:
+   ```bash
+   FIRECRAWL_API_KEY=your_firecrawl_api_key_here
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+#### Security Best Practices
+
+- ✅ **Use `.env` files** for all sensitive configuration
+- ✅ **Keep `.env.example` files** with placeholder patterns
+- ✅ **Verify `.gitignore`** excludes all `.env` files
+- ✅ **Use environment variables** in production
+- ✅ **Rotate credentials regularly** for production systems
+- ❌ **Never hardcode credentials** in source code
+- ❌ **Never commit `.env` files** to version control
+- ❌ **Never share credentials** in documentation or chat
+
 ### Backend Configuration
 
-Copy `backend/.env.example` to `backend/.env` and configure:
+Complete `backend/.env` configuration:
 
 ```bash
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/product_automation
+# Supabase Configuration
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_KEY=your-service-key-here
+SUPABASE_DATABASE_URL=postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
 
-# Redis
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID=your_aws_access_key_id_here
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key_here
+AWS_REGION=eu-north-1
+S3_BUCKET_NAME=your_s3_bucket_name_here
+S3_INVOICE_PREFIX=invoices
+INVOICE_DOWNLOAD_EXPIRATION=3600
+TEMP_FILE_CLEANUP=true
+
+# Redis Configuration
 REDIS_URL=redis://localhost:6379
 
 # API Keys
 FIRECRAWL_API_KEY=your_firecrawl_api_key_here
 OPENAI_API_KEY=your_openai_api_key_here
 
-# Development
+# Development Configuration
 DEBUG=true
 LOG_LEVEL=DEBUG
 ENVIRONMENT=development
+
+# Server Configuration
+BACKEND_PORT=8000
+FRONTEND_PORT=3000
+
+# CORS Configuration
+CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
+
+# Application Configuration
+APP_NAME=Universal Product Automation System
+APP_VERSION=1.0.0
+
+# File Processing Configuration
+MAX_FILE_SIZE=52428800
+SUPPORTED_FILE_TYPES=[".csv", ".xlsx", ".xls", ".pdf"]
+
+# Image Processing Configuration
+MIN_IMAGE_DIMENSION=1000
+IMAGE_FORMATS=[".jpg", ".jpeg", ".png", ".webp", ".gif"]
+
+# Scraping Configuration
+SCRAPING_DELAY=1.0
+SCRAPING_TIMEOUT=30
+
+# Tax Configuration (MVP - hardcoded)
+GAMBIO_DEFAULT_TAX_CLASS_ID=1
+
+# Currency Configuration
+DEFAULT_CURRENCY_FROM=USD
+DEFAULT_CURRENCY_TO=EUR
+DEFAULT_EXCHANGE_RATE=0.85
 ```
 
 ### Frontend Configuration
