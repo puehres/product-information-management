@@ -132,95 +132,195 @@ GAMBIO_DEFAULT_TAX_CLASS_ID=1
 **Dependencies**: Task 1
 **Output**: Simplified, focused Supabase database setup for MVP validation
 
-### Task 3: Lawn Fawn Invoice Parser (PDF + CSV Support)
+### Task 3: Enhanced Invoice Parser with S3 Storage & Supplier Detection ✅ COMPLETED (2025-01-07)
 
-- [ ] Build flexible file upload system (PDF primary, CSV fallback)
-- [ ] Create PDF invoice parser using pdfplumber for table extraction
-- [ ] Extract LF SKU numbers (format: "LF3242") from PDF invoices
-- [ ] Parse product names, USD prices, and quantities from invoices
-- [ ] Implement USD to EUR currency conversion
-- [ ] Create Lawn Fawn CSV parser for product release lists (fallback)
-- [ ] Validate file formats and required fields
-- [ ] Create batch tracking for uploads with invoice metadata
-- [ ] Add basic error handling for malformed files
-- [ ] Store parsed data in database with proper field mapping
-- [ ] Create simple progress tracking
+- [x] Build S3-based file upload system for PDF invoices (no local storage)
+- [x] Create automatic supplier detection from invoice headers/content
+- [x] Implement PDF invoice parser using pdfplumber for table extraction
+- [x] Extract product data from supplier-specific invoice formats
+- [x] Parse invoice metadata (invoice number, date, company info)
+- [x] Store original invoices in S3 with organized folder structure
+- [x] Create invoice download capability with presigned URLs
+- [x] Implement comprehensive error handling for unknown suppliers
+- [x] Store parsed data with supplier/manufacturer distinction
+- [x] Add invoice status dashboard with parsing results
+- [x] Create single upload workflow (no batching)
 
-**Primary Input: PDF Invoices (Business Workflow):**
-- **LF SKU**: Primary identifier (e.g., "LF3242")
-- **Product Names**: Basic product names from invoice
-- **USD Prices**: Actual purchase prices in USD
-- **Quantities**: Ordered quantities for inventory tracking
-- **Invoice Metadata**: Invoice number, date, line items
+**Completion Notes**: Complete invoice processing system implemented with S3 storage, automatic supplier detection, and comprehensive API endpoints. FastAPI application successfully created with all routes registered. Ready for integration testing with actual invoice files.
 
-**Fallback Input: CSV Product Release Lists:**
-- **LF SKU**: Primary identifier (e.g., "LF3242")
-- **product_name**: Complete product names for translation
-- **description**: Detailed product descriptions
-- **MSRP**: Pricing information for comparison
-- **tags**: Category/classification data
-- **barcode**: Additional validation identifier
+**Next**: Dependencies met for Task 4 - SKU-Search-Based Product Matching
 
-**Invoice Parser Implementation:**
+**Discovered During Work**: 
+- Added comprehensive database migration with 25 new fields
+- Implemented extensible parsing strategy pattern for future suppliers
+- Created complete API documentation with structured error responses
+- Added performance optimizations with database indexes and constraints
+
+**Enhanced Business Requirements:**
+- **S3 Storage**: All invoices stored in cloud, not locally
+- **Supplier Detection**: Automatically identify invoice issuer from header
+- **Download Capability**: Users can re-download original invoices
+- **Error Handling**: Clear messages for unsupported suppliers
+- **Currency Handling**: Store original USD/EUR prices (no conversion)
+- **Metadata Extraction**: Invoice number, date, company information
+- **Status Reporting**: Success rates and parsing details
+
+**Supplier Detection Strategy:**
 ```python
-class LawnFawnInvoiceParser:
-    def __init__(self):
-        self.supported_formats = ['pdf', 'csv']
-        self.usd_to_eur_rate = 0.85  # Configurable conversion rate
+class SupplierDetectionService:
+    SUPPLIER_PATTERNS = {
+        'lawnfawn': [
+            'Lawn Fawn',
+            'lawnfawn.com', 
+            'Rancho Santa Margarita, CA 92688'
+        ],
+        'craftlines': [
+            'Craftlines',
+            'craftlines.eu',
+            'Craft Lines Europe'
+        ],
+        'mama-elephant': [
+            'Mama Elephant',
+            'mamaelephant.com'
+        ]
+    }
     
-    def parse_file(self, file_path):
-        if file_path.endswith('.pdf'):
-            return self.parse_pdf_invoice(file_path)
-        elif file_path.endswith('.csv'):
-            return self.parse_csv_release_list(file_path)
+    def detect_supplier(self, pdf_content: str) -> str:
+        """Detect invoice supplier from header/footer content"""
+        for supplier_code, patterns in self.SUPPLIER_PATTERNS.items():
+            for pattern in patterns:
+                if pattern.lower() in pdf_content.lower():
+                    return supplier_code
+        raise UnknownSupplierError("Supplier not supported")
+```
+
+**S3 Storage Architecture:**
+```
+s3://product-processing-bucket/
+├── invoices/
+│   ├── lawnfawn/
+│   │   ├── 2025/01/
+│   │   │   ├── lawnfawn_invoice_20250107_143022.pdf
+│   │   │   └── lawnfawn_invoice_20250107_143022_metadata.json
+│   ├── craftlines/
+│   └── mama-elephant/
+├── processing/{batch_id}/     # Images (existing)
+└── exports/{export_date}/     # Export packages (existing)
+```
+
+**Enhanced Product Data Model:**
+```python
+# Two-level tracking: Supplier (who you buy from) + Manufacturer (who makes it)
+class ProductData:
+    # Invoice/Purchase Information
+    supplier: str              # 'lawnfawn', 'craftlines' (invoice issuer)
+    supplier_sku: str          # SKU as it appears on invoice
+    supplier_price_usd: float  # USD price from invoice
+    supplier_price_eur: float  # EUR price from invoice (if applicable)
+    quantity_ordered: int      # Quantity from invoice
     
-    def parse_pdf_invoice(self, pdf_path):
-        # Extract table data from PDF invoice
-        # Look for LF SKU, product name, USD price, quantity
-        # Return structured invoice data
-        pass
+    # Product/Manufacturer Information  
+    manufacturer: str          # 'lawnfawn', 'mama-elephant' (who made it)
+    manufacturer_sku: str      # Original manufacturer SKU (LF1142)
+    category: str              # Product category (Lawn Cuts)
+    product_name: str          # Actual product name
     
-    def convert_usd_to_eur(self, usd_price):
-        return round(usd_price * self.usd_to_eur_rate, 2)
-    
-    def extract_sku_number(self, lf_sku):
-        # "LF3242" → "3242" for search
-        return lf_sku.replace("LF", "").replace("-", "").strip()
+    # Invoice Metadata
+    invoice_number: str        # CP-Summer25
+    invoice_date: str          # 2025-06-10
+    line_number: int           # Position in invoice
+```
+
+**Invoice Processing Flow:**
+```
+1. User uploads PDF → 
+2. Upload to S3 invoices/{supplier}/{year}/{month}/ →
+3. Extract PDF text and table data →
+4. Detect supplier from header (LawnFawn, Craftlines, etc.) →
+5. Parse products using supplier-specific format →
+6. Extract invoice metadata (number, date, totals) →
+7. Store in database with S3 URL reference →
+8. Return processing results with download capability
+```
+
+**Supported Invoice Formats:**
+
+**LawnFawn Direct:**
+- **Header**: "Lawn Fawn, Rancho Santa Margarita, CA 92688"
+- **Format**: "LF1142 - Lawn Cuts - Stitched Rectangle Frames Dies"
+- **Currency**: USD
+- **Products**: Only LawnFawn products
+
+**Craftlines Wholesaler:**
+- **Header**: "Craftlines" or "Craft Lines Europe"  
+- **Format**: Mixed manufacturer products
+- **Currency**: EUR
+- **Products**: LawnFawn + Mama Elephant + Craftlines products
+
+**Mama Elephant Direct:**
+- **Header**: "Mama Elephant"
+- **Format**: Product names only (no SKUs)
+- **Currency**: USD
+- **Products**: Only Mama Elephant products
+
+**API Endpoints:**
+```python
+# POST /api/upload/invoice
+# - Upload PDF file
+# - Returns: supplier detected, products found, parsing success rate
+
+# GET /api/invoices
+# - List all uploaded invoices with status
+
+# GET /api/invoices/{batch_id}/download  
+# - Generate presigned S3 URL for original invoice download
+
+# GET /api/invoices/{batch_id}/details
+# - Show detailed parsing results and extracted products
+```
+
+**Error Handling:**
+```python
+# Success Response
+{
+    "success": true,
+    "supplier": "lawnfawn",
+    "products_found": 12,
+    "parsing_success_rate": 91.7,
+    "invoice_metadata": {
+        "invoice_number": "CP-Summer25",
+        "invoice_date": "2025-06-10",
+        "total_amount": "$247.20"
+    }
+}
+
+# Unknown Supplier Error
+{
+    "success": false,
+    "error": "unknown_supplier", 
+    "message": "Could not identify invoice supplier",
+    "supported_suppliers": ["lawnfawn", "craftlines", "mama-elephant"]
+}
 ```
 
 **Technology Stack:**
-- **pdfplumber**: PDF table extraction (primary)
-- **PyPDF2**: Fallback for simple text extraction
-- **pandas**: Data processing and validation
-- **Currency conversion**: USD → EUR with configurable rates
+- **pdfplumber**: PDF table extraction and text parsing
+- **boto3**: AWS S3 SDK for file storage and presigned URLs
+- **FastAPI**: File upload endpoints with multipart support
+- **Supabase**: Database storage for invoice metadata and products
+- **React**: Frontend upload interface with drag-and-drop
 
 **Key Features:**
-- Primary PDF invoice processing (business-aligned workflow)
-- Fallback CSV support for product release lists
-- USD to EUR currency conversion
-- LF SKU extraction and validation
-- Invoice metadata tracking (number, date, quantities)
-- Flexible input format detection
-- Batch processing with status tracking
-- Basic error handling and validation
+- **Cloud-First**: No local file storage, everything in S3
+- **Automatic Detection**: Identify supplier from invoice content
+- **Download Capability**: Re-download original invoices anytime
+- **Comprehensive Status**: Detailed parsing results and error reporting
+- **Supplier Agnostic**: Support multiple invoice formats and suppliers
+- **Metadata Rich**: Extract and store complete invoice information
+- **Error Recovery**: Clear error messages and retry capabilities
 
-**Data Enrichment Strategy:**
-```python
-# Invoice data (minimal from PDF)
-invoice_data = {
-    'sku': 'LF3242',
-    'name': 'Capybaras',
-    'usd_price': 15.99,
-    'eur_price': 13.59,  # Converted
-    'quantity': 2,
-    'invoice_number': 'INV-2025-001'
-}
-
-# Same SKU search strategy enriches with full product details
-```
-
-**Dependencies**: Task 2
-**Output**: Flexible invoice-driven parsing with PDF support and currency conversion
+**Dependencies**: Task 2 (Database setup complete)
+**Output**: Production-ready invoice processing with S3 storage and supplier detection
 
 ### Task 4: SKU-Search-Based Product Matching (Lawn Fawn)
 

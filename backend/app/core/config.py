@@ -162,6 +162,54 @@ class Settings(BaseSettings):
         description="Default USD to EUR exchange rate"
     )
     
+    # AWS S3 Configuration
+    aws_access_key_id: Optional[str] = Field(
+        default=None,
+        description="AWS access key ID for S3 operations"
+    )
+    
+    aws_secret_access_key: Optional[str] = Field(
+        default=None,
+        description="AWS secret access key for S3 operations"
+    )
+    
+    aws_region: str = Field(
+        default="eu-north-1",
+        description="AWS region - Stockholm for EU compliance"
+    )
+    
+    s3_bucket_name: str = Field(
+        default="sw-product-processing-bucket",
+        description="S3 bucket name for file storage"
+    )
+    
+    s3_invoice_prefix: str = Field(
+        default="invoices",
+        description="S3 prefix for invoice storage"
+    )
+    
+    # Invoice Processing Configuration
+    invoice_download_expiration: int = Field(
+        default=3600,
+        description="Download URL expiration time in seconds (1 hour)"
+    )
+    
+    temp_file_cleanup: bool = Field(
+        default=True,
+        description="Automatically cleanup temporary files after processing"
+    )
+    
+    # Supplier Detection Configuration
+    supplier_detection_confidence_threshold: float = Field(
+        default=0.5,
+        description="Minimum confidence threshold for supplier detection"
+    )
+    
+    supported_suppliers: list[str] = Field(
+        default=["lawnfawn", "craftlines", "mama-elephant"],
+        description="List of supported supplier codes for invoice processing"
+    )
+    
     class Config:
         """Pydantic configuration."""
         # Only load .env file if not running tests

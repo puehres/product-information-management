@@ -378,115 +378,139 @@ s3://product-processing-bucket/
         - {sku}_detail_01.jpeg
 ```
 
-## Detailed Supplier Data Mapping & Scraping Strategy
+## Supplier vs Manufacturer Business Model
 
-### Universal Data Mapping Matrix
+### **Critical Distinction: Invoice Suppliers vs Product Manufacturers**
 
-| Field | Craftlines | Lawn Fawn | Mama Elephant | Scraping Priority |
-|-------|------------|-----------|---------------|-------------------|
-| **Identifier** | ✅ Code/EAN | ✅ SKU | ❌ Name only | N/A |
-| **Product Name** | ✅ Available | ✅ Available | ✅ Available | LOW |
-| **Description** | ⚠️ Basic | ⚠️ Basic | ❌ Missing | HIGH |
-| **Images** | ❌ Missing | ❌ Missing | ❌ Missing | CRITICAL |
-| **Categories** | ❌ Missing | ❌ Missing | ❌ Missing | HIGH |
-| **Pricing** | ⚠️ Maybe | ❌ Missing | ❌ Missing | MEDIUM |
-| **SEO Content** | ❌ Missing | ❌ Missing | ❌ Missing | MEDIUM |
-| **Product URL** | 🔍 Generate | 🔍 Generate | 🔍 Discover | CRITICAL |
+**Invoice Suppliers** = Who you buy from (business relationship)
+- LawnFawn (direct manufacturer sales)
+- Craftlines (European wholesaler/distributor)
+- Mama Elephant (direct manufacturer sales)
 
-### Supplier-Specific Considerations
+**Product Manufacturers** = Who makes the products (for scraping/categorization)
+- LawnFawn products (can be sold by LawnFawn directly OR by Craftlines)
+- Mama Elephant products (can be sold by Mama Elephant directly OR by Craftlines)
+- Craftlines own-brand products (sold only by Craftlines)
 
-### 1. Craftlines (craftlines.eu)
-**Available Data from File:**
-- Product codes/EANs (primary identifier)
-- Product names/descriptions (German/English)
-- Basic product information
-- Possibly pricing data
-- Supplier codes/references
+### **Real-World Business Scenarios**
 
-**Missing Data (Needs Scraping):**
-- High-quality product images
-- Detailed product descriptions
-- Product categories/classifications
-- Technical specifications
-- Stock availability
-- SEO-optimized content
+#### **Scenario 1: Direct Manufacturer Purchase**
+```
+Invoice From: LawnFawn
+Products: Only LawnFawn products (LF1142, LF1167, etc.)
+Scraping Target: lawnfawn.com
+```
 
-**Scraping Strategy:**
-- **Primary Method**: Direct URL construction using product codes
-- **Fallback**: Search functionality with code matching
-- **Confidence**: HIGH (has reliable product codes)
-- **Multi-language**: Already has German content available
-- **Categories**: Varies by sub-brand and product type
+#### **Scenario 2: Wholesaler Purchase (Multi-Manufacturer)**
+```
+Invoice From: Craftlines
+Products: Mixed manufacturers
+- LawnFawn products (LF1142 - Lawn Cuts - Stitched Rectangle Frames)
+- Mama Elephant products (ME5678 - Clear Stamps - Happy Birthday)
+- Craftlines products (CL1234 - Dies - Custom Shape)
+Scraping Targets: lawnfawn.com, mamaelephant.com, craftlines.eu
+```
 
-### 2. Lawn Fawn (lawnfawn.com)
-**Available Data from Invoice (Primary Input):**
-- **LF SKU**: Primary identifier (format: "LF3242")
-- **Product Names**: Basic product names from invoice
-- **USD Pricing**: Actual purchase prices in USD
-- **Quantities**: Ordered quantities for inventory tracking
-- **Invoice Metadata**: Invoice number, date, line items
+### **Enhanced Supplier Data Mapping Matrix**
 
-**Available Data from Product Release CSV (Fallback):**
-- **LF SKU**: Primary identifier (format: "LF3242")
-- **Product Names**: Complete product names for translation
-- **Descriptions**: Detailed product descriptions available
-- **MSRP**: Pricing information for comparison
-- **Tags**: Category/classification data
-- **Barcode**: Additional validation identifier
+| Field | LawnFawn Direct | Craftlines Multi-Mfg | Mama Elephant Direct | Scraping Priority |
+|-------|-----------------|----------------------|---------------------|-------------------|
+| **Invoice Supplier** | ✅ LawnFawn | ✅ Craftlines | ✅ Mama Elephant | N/A |
+| **Product Manufacturers** | ✅ LawnFawn only | ⚠️ Mixed (LF+ME+CL) | ✅ Mama Elephant only | CRITICAL |
+| **Manufacturer SKUs** | ✅ LF1142 | ✅ LF1142, ME5678 | ❌ Name only | HIGH |
+| **Product Names** | ✅ Available | ✅ Available | ✅ Available | LOW |
+| **Images** | ❌ Need scraping | ❌ Need scraping | ❌ Need scraping | CRITICAL |
+| **Categories** | ❌ Need scraping | ❌ Need scraping | ❌ Need scraping | HIGH |
+| **Pricing** | ✅ USD from invoice | ✅ EUR from invoice | ✅ USD from invoice | MEDIUM |
 
-**Missing Data (Needs Scraping):**
-- Product images (main + detail shots)
-- Enhanced product descriptions
-- Product categories (stamps, dies, papers, etc.)
-- Usage examples/inspiration images
-- Technical specifications
+### **Supplier-Specific Processing Strategies**
 
-**Input Processing Strategy:**
-- **Primary Input**: PDF invoices (business-driven workflow)
-- **Fallback Input**: CSV product release lists
-- **PDF Parsing**: Extract table data with SKU, name, price, quantity
-- **Currency Conversion**: USD → EUR conversion for pricing
-- **Single Invoice Processing**: One invoice upload at a time
+### 1. LawnFawn Direct (lawnfawn.com invoices)
+**Invoice Characteristics:**
+- **Header**: "Lawn Fawn, Rancho Santa Margarita, CA 92688"
+- **Format**: Clean table with Qty, Description, Price, Origin, Tariff Code, Amount
+- **Products**: Only LawnFawn products (LF SKU format)
+- **Currency**: USD pricing
+- **Description Format**: "LF1142 - Lawn Cuts - Stitched Rectangle Frames Dies"
 
-**Scraping Strategy:**
-- **Primary Method**: SKU-based search using Lawn Fawn's search functionality
-- **Search Pattern**: Extract numeric SKU from LF number (LF3242 → 3242)
-- **Search URL**: `https://www.lawnfawn.com/search?options%5Bprefix%5D=last&q={sku}&filter.p.product_type=`
-- **Result Processing**: Parse search results to extract actual product URLs
-- **Confidence**: HIGH (95% for unique SKU matches, 80% for multiple results)
-- **Data Enrichment**: Combine minimal invoice data with comprehensive scraped data
-- **Pricing Strategy**: Use actual purchase price, store MSRP as reference
-- **Fallback**: Manual review for failed searches
-- **Image Types**: Main product, packaging, usage examples
-- **Categories**: Stamps, Dies, Papers, Stencils, Ink, Tools
+**Processing Strategy:**
+- **Supplier Detection**: Company name in header (95% confidence)
+- **Product Parsing**: Extract LF SKU, category, product name from description
+- **Scraping Target**: lawnfawn.com only
+- **Currency**: Store USD prices as-is, no conversion needed
+- **Confidence**: HIGH (single manufacturer, consistent format)
 
-### 3. Mama Elephant (mamaelephant.com)
-**Available Data from Invoice:**
-- Product names ONLY (e.g., "bakery bears cc", "little agenda bakery")
-- No SKUs, codes, or structured identifiers
+### 2. Craftlines Wholesaler (craftlines.eu invoices)
+**Invoice Characteristics:**
+- **Header**: "Craftlines" or "Craft Lines Europe"
+- **Format**: Multi-manufacturer product mix
+- **Products**: LawnFawn (LF), Mama Elephant (ME), Craftlines (CL) products
+- **Currency**: EUR pricing
+- **Description Formats**: 
+  - "LF1142 - Lawn Cuts - Stitched Rectangle Frames Dies" (LF products)
+  - "ME5678 - Clear Stamps - Happy Birthday" (ME products)
+  - "CL1234 - Dies - Custom Shape" (Craftlines products)
 
-**Missing Data (Needs Scraping):**
-- EVERYTHING except product name:
-  - Product URLs (must be discovered)
-  - All product images
-  - Complete descriptions
-  - Categories (Clear Stamps, Creative Cuts, etc.)
-  - Pricing
-  - Product codes/SKUs
-  - Technical specifications
+**Processing Strategy:**
+- **Supplier Detection**: Company name in header
+- **Product Parsing**: Extract manufacturer SKU, determine manufacturer from SKU prefix
+- **Scraping Targets**: Multiple sites based on manufacturer
+  - LF products → lawnfawn.com
+  - ME products → mamaelephant.com  
+  - CL products → craftlines.eu
+- **Currency**: EUR prices from invoice
+- **Confidence**: MEDIUM (multi-manufacturer complexity)
 
-**Scraping Strategy:**
-- **Primary Method**: Website search with fuzzy name matching
-- **Secondary**: Category browsing + name similarity scoring
-- **Tertiary**: Manual URL entry via review system
+### 3. Mama Elephant Direct (mamaelephant.com invoices)
+**Invoice Characteristics:**
+- **Header**: "Mama Elephant"
+- **Format**: Simple product names only
+- **Products**: Only Mama Elephant products
+- **Currency**: USD pricing
+- **Description Format**: "bakery bears cc", "little agenda bakery" (no SKUs)
+
+**Processing Strategy:**
+- **Supplier Detection**: Company name in header
+- **Product Parsing**: Product names only, no SKUs available
+- **Scraping Target**: mamaelephant.com only
+- **Currency**: USD pricing
 - **Confidence**: LOW-MEDIUM (name-only matching is challenging)
-- **Unique Challenge**: No product codes/EANs - only product names on invoices
-- **Image Types**: Product shots, usage examples, detail images, inspiration gallery
-- **Categories**: Clear Stamps, Creative Cuts, Creative Color, The Shoppe
-- **Invoice Format**: Simple product names (e.g., "bakery bears cc", "little agenda bakery")
-- **Processing Volume**: Up to 100 products per batch
-- **Fallback Methods**: Category browsing, manual URL entry, search refinement
-- **Confidence Scoring**: Name similarity, search result ranking, product availability
+
+### **Universal Product Processing Pipeline**
+
+```
+1. Invoice Upload → 
+2. Supplier Detection (from invoice header) →
+3. Product Line Parsing (supplier-specific format) →
+4. Manufacturer Identification (from SKU prefix or supplier) →
+5. Multi-Target Scraping (manufacturer-specific websites) →
+6. Data Consolidation → 
+7. Gambio Export
+```
+
+### **Database Schema for Two-Level Tracking**
+
+```sql
+-- Products table enhanced for supplier/manufacturer distinction
+CREATE TABLE products (
+    -- Invoice/Purchase Information (who you bought from)
+    supplier_id UUID REFERENCES suppliers(id),           -- Craftlines
+    supplier_sku VARCHAR(100),                           -- Craftlines' internal SKU
+    supplier_price_usd DECIMAL(10,2),                    -- What Craftlines charged (USD)
+    supplier_price_eur DECIMAL(10,2),                    -- What Craftlines charged (EUR)
+    
+    -- Product/Manufacturer Information (who made it)
+    manufacturer VARCHAR(100),                           -- 'lawnfawn', 'mama-elephant'
+    manufacturer_sku VARCHAR(100),                       -- 'LF1142', 'ME5678'
+    manufacturer_website VARCHAR(255),                   -- For scraping target
+    
+    -- Product Details (from scraping manufacturer website)
+    product_name VARCHAR(500),                           -- Actual product name
+    category VARCHAR(255),                               -- Product category
+    scraped_url VARCHAR(1000),                          -- Manufacturer product page
+    -- ... rest of fields
+);
+```
 
 ### Universal Matching Confidence Algorithms
 

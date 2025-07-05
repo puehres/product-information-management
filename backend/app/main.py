@@ -97,7 +97,11 @@ def create_application() -> FastAPI:
             allowed_hosts=["localhost", "127.0.0.1", "*.stempelwunderwelt.at"]
         )
     
-    # TODO: Add API routers
+    # Add API routers
+    from app.api import upload
+    app.include_router(upload.router, prefix="/api/v1", tags=["upload"])
+    
+    # TODO: Add additional routers
     # app.include_router(products.router, prefix="/api/v1/products", tags=["products"])
     # app.include_router(suppliers.router, prefix="/api/v1/suppliers", tags=["suppliers"])
     # app.include_router(scraping.router, prefix="/api/v1/scraping", tags=["scraping"])

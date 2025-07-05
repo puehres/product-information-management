@@ -24,6 +24,19 @@ class ProductBase(BaseCreateModel):
     supplier_price_usd: Optional[Decimal] = Field(None, ge=0, description="Supplier price in USD")
     supplier_price_eur: Optional[Decimal] = Field(None, ge=0, description="Supplier price in EUR")
     
+    # Manufacturer and invoice-specific fields
+    manufacturer: Optional[str] = Field(None, max_length=50, description="Product manufacturer")
+    manufacturer_sku: Optional[str] = Field(None, max_length=100, description="Original manufacturer SKU")
+    manufacturer_website: Optional[str] = Field(None, max_length=255, description="Manufacturer website")
+    category: Optional[str] = Field(None, max_length=100, description="Product category")
+    quantity_ordered: Optional[int] = Field(None, ge=1, description="Quantity ordered from invoice")
+    line_total_usd: Optional[Decimal] = Field(None, ge=0, description="Total line amount USD")
+    line_total_eur: Optional[Decimal] = Field(None, ge=0, description="Total line amount EUR")
+    origin_country: Optional[str] = Field(None, max_length=50, description="Country of origin")
+    tariff_code: Optional[str] = Field(None, max_length=20, description="Tariff code")
+    raw_description: Optional[str] = Field(None, description="Original description from invoice")
+    line_number: Optional[int] = Field(None, ge=1, description="Line number in invoice")
+    
     @validator('supplier_sku')
     def validate_supplier_sku(cls, v):
         """Validate supplier SKU."""

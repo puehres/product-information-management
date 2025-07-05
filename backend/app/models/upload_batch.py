@@ -23,6 +23,22 @@ class UploadBatchBase(BaseCreateModel):
     file_size: Optional[int] = Field(None, ge=0, description="File size in bytes")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional batch metadata")
     
+    # Invoice-specific fields
+    original_filename: Optional[str] = Field(None, max_length=255, description="Original uploaded filename")
+    file_size_bytes: Optional[int] = Field(None, ge=0, description="File size in bytes")
+    s3_key: Optional[str] = Field(None, max_length=500, description="S3 object key")
+    s3_url: Optional[str] = Field(None, max_length=1000, description="S3 object URL")
+    supplier_code: Optional[str] = Field(None, max_length=50, description="Detected supplier code")
+    supplier_detection_method: Optional[str] = Field(None, max_length=50, description="Method used for supplier detection")
+    supplier_detection_confidence: Optional[float] = Field(None, ge=0, le=1, description="Supplier detection confidence")
+    invoice_number: Optional[str] = Field(None, max_length=100, description="Invoice number")
+    invoice_date: Optional[str] = Field(None, max_length=20, description="Invoice date")
+    currency_code: Optional[str] = Field(None, max_length=3, description="Currency code (USD, EUR, etc.)")
+    total_amount_original: Optional[Decimal] = Field(None, ge=0, description="Total invoice amount in original currency")
+    parsing_success_rate: Optional[float] = Field(None, ge=0, le=100, description="Parsing success rate percentage")
+    download_count: Optional[int] = Field(None, ge=0, description="Number of times invoice was downloaded")
+    last_downloaded_at: Optional[datetime] = Field(None, description="Last download timestamp")
+    
     @validator('batch_name')
     def validate_batch_name(cls, v):
         """Validate batch name."""

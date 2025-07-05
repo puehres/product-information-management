@@ -17,11 +17,11 @@ from dotenv import load_dotenv
 import json
 
 # Add the app directory to the Python path
-sys.path.append(str(Path(__file__).parent / "app"))
+sys.path.append(str(Path(__file__).parent.parent.parent / "app"))
 
 def load_environment():
     """Load environment variables from .env file."""
-    env_path = Path(__file__).parent / ".env"
+    env_path = Path(__file__).parent.parent.parent / ".env"
     if env_path.exists():
         load_dotenv(env_path)
         print("✅ Environment variables loaded successfully")
@@ -168,7 +168,7 @@ def test_frontend_connection() -> bool:
     try:
         print("🎨 Testing frontend configuration...")
         
-        frontend_env_path = Path(__file__).parent.parent / "frontend" / ".env.local"
+        frontend_env_path = Path(__file__).parent.parent.parent.parent / "frontend" / ".env.local"
         
         if not frontend_env_path.exists():
             print("❌ Frontend .env.local file not found")
@@ -262,9 +262,6 @@ def run_connectivity_tests():
     if tests_passed == total_tests and frontend_ok:
         print("\n🎉 All tests passed! Your Supabase setup is ready for development.")
         print("\n🚀 Next Steps:")
-        print("  1. Your database schema is properly configured")
-        print("  2. Lawn Fawn supplier is ready for processing")
-        print("  3. You can now proceed with Task 3: Invoice Parser")
         return True
     else:
         print(f"\n⚠️  {total_tests - tests_passed} tests failed. Please check the errors above.")
