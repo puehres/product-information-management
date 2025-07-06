@@ -45,28 +45,58 @@ CREATE INDEX IF NOT EXISTS idx_products_origin_country ON products(origin_countr
 CREATE INDEX IF NOT EXISTS idx_products_tariff_code ON products(tariff_code);
 CREATE INDEX IF NOT EXISTS idx_products_line_number ON products(line_number);
 
--- Add constraints
-ALTER TABLE upload_batches ADD CONSTRAINT IF NOT EXISTS chk_supplier_detection_confidence 
-    CHECK (supplier_detection_confidence IS NULL OR (supplier_detection_confidence >= 0 AND supplier_detection_confidence <= 1));
+-- Add constraints (PostgreSQL doesn't support IF NOT EXISTS for constraints, so we'll use DO blocks)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_supplier_detection_confidence') THEN
+        ALTER TABLE upload_batches ADD CONSTRAINT chk_supplier_detection_confidence 
+            CHECK (supplier_detection_confidence IS NULL OR (supplier_detection_confidence >= 0 AND supplier_detection_confidence <= 1));
+    END IF;
+END $$;
 
-ALTER TABLE upload_batches ADD CONSTRAINT IF NOT EXISTS chk_parsing_success_rate 
-    CHECK (parsing_success_rate IS NULL OR (parsing_success_rate >= 0 AND parsing_success_rate <= 100));
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_parsing_success_rate') THEN
+        ALTER TABLE upload_batches ADD CONSTRAINT chk_parsing_success_rate 
+            CHECK (parsing_success_rate IS NULL OR (parsing_success_rate >= 0 AND parsing_success_rate <= 100));
+    END IF;
+END $$;
 
-ALTER TABLE upload_batches ADD CONSTRAINT IF NOT EXISTS chk_download_count 
-    CHECK (download_count >= 0);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_download_count') THEN
+        ALTER TABLE upload_batches ADD CONSTRAINT chk_download_count 
+            CHECK (download_count >= 0);
+    END IF;
+END $$;
 
-ALTER TABLE products ADD CONSTRAINT IF NOT EXISTS chk_quantity_ordered 
-    CHECK (quantity_ordered IS NULL OR quantity_ordered > 0);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_quantity_ordered') THEN
+        ALTER TABLE products ADD CONSTRAINT chk_quantity_ordered 
+            CHECK (quantity_ordered IS NULL OR quantity_ordered > 0);
+    END IF;
+END $$;
 
-ALTER TABLE products ADD CONSTRAINT IF NOT EXISTS chk_line_number 
-    CHECK (line_number IS NULL OR line_number > 0);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_line_number') THEN
+        ALTER TABLE products ADD CONSTRAINT chk_line_number 
+            CHECK (line_number IS NULL OR line_number > 0);
+    END IF;
+END $$;
 
 -- Add manufacturer consistency constraint
-ALTER TABLE products ADD CONSTRAINT IF NOT EXISTS chk_manufacturer_consistency 
-    CHECK (
-        (manufacturer IS NULL AND manufacturer_sku IS NULL) OR 
-        (manufacturer IS NOT NULL AND manufacturer_sku IS NOT NULL)
-    );
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_manufacturer_consistency') THEN
+        ALTER TABLE products ADD CONSTRAINT chk_manufacturer_consistency 
+            CHECK (
+                (manufacturer IS NULL AND manufacturer_sku IS NULL) OR 
+                (manufacturer IS NOT NULL AND manufacturer_sku IS NOT NULL)
+            );
+    END IF;
+END $$;
 
 -- Add comments for documentation
 COMMENT ON COLUMN upload_batches.original_filename IS 'Original filename of uploaded invoice';
@@ -117,7 +147,7 @@ SELECT
     s.name as supplier_name
 FROM upload_batches ub
 LEFT JOIN suppliers s ON ub.supplier_id = s.id
-WHERE ub.file_type = 'PDF'
+WHERE ub.file_type = 'pdf'
 ORDER BY ub.created_at DESC;
 
 COMMENT ON VIEW invoice_summaries IS 'Summary view of processed invoices with supplier information';
@@ -146,7 +176,7 @@ SELECT
     ub.original_filename,
     s.name as supplier_name
 FROM products p
-JOIN upload_batches ub ON p.upload_batch_id = ub.id
+JOIN upload_batches ub ON p.batch_id = ub.id
 LEFT JOIN suppliers s ON p.supplier_id = s.id
 ORDER BY ub.created_at DESC, p.line_number ASC;
 

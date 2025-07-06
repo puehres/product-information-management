@@ -247,52 +247,72 @@ class InvoiceProcessorService:
             original_filename: Original filename
             file_size: File size in bytes
         """
-        # Create upload batch record
-        batch_data = {
-            'id': batch_id,
-            'file_type': 'PDF',
-            'status': 'COMPLETED',
-            'original_filename': original_filename,
-            'file_size_bytes': file_size,
-            's3_key': s3_info['s3_key'],
-            's3_url': s3_info['s3_url'],
-            'supplier_code': detection_result.supplier_code,
-            'supplier_detection_method': detection_result.detection_method.value,
-            'supplier_detection_confidence': float(detection_result.confidence),
-            'invoice_number': parsing_result.metadata.invoice_number,
-            'invoice_date': parsing_result.metadata.invoice_date,
-            'currency_code': parsing_result.metadata.currency,
-            'total_amount_original': float(parsing_result.metadata.total_amount) if parsing_result.metadata.total_amount else None,
-            'parsing_success_rate': parsing_result.parsing_success_rate,
-            'products_found': len(parsing_result.products),
-            'parsing_errors': parsing_result.parsing_errors,
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
+        # Import the required models
+        from app.models.upload_batch import UploadBatchCreate
+        from app.models.product import ProductCreate
+        from app.models.base import FileType
+        from uuid import UUID
+        
+        # Get supplier ID - map supplier codes to database codes
+        supplier_code_mapping = {
+            'lawnfawn': 'LF',
+            'craftlines': 'CL',
+            'mama_elephant': 'ME'
         }
         
-        # Store batch record
-        await self.db_service.create_upload_batch(batch_data)
+        db_supplier_code = supplier_code_mapping.get(detection_result.supplier_code, detection_result.supplier_code)
+        supplier = await self.db_service.get_supplier_by_code(db_supplier_code)
         
-        # Store product records
+        if not supplier:
+            logger.error(f"Supplier with code {db_supplier_code} not found in database")
+            raise Exception(f"Supplier {detection_result.supplier_code} (DB code: {db_supplier_code}) not found in database")
+        
+        supplier_id = supplier.id if hasattr(supplier, 'id') else UUID(str(supplier['id']))
+        
+        # Create upload batch record
+        batch_data = UploadBatchCreate(
+            supplier_id=str(supplier_id),
+            batch_name=f"Invoice_{parsing_result.metadata.invoice_number or 'Unknown'}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            file_type=FileType.PDF,
+            original_filename=original_filename,
+            file_size_bytes=file_size,
+            s3_key=s3_info['s3_key'],
+            s3_url=s3_info['s3_url'],
+            supplier_code=detection_result.supplier_code,
+            supplier_detection_method=detection_result.detection_method.value,
+            supplier_detection_confidence=float(detection_result.confidence),
+            invoice_number=parsing_result.metadata.invoice_number,
+            invoice_date=parsing_result.metadata.invoice_date,
+            currency_code=parsing_result.metadata.currency,
+            total_amount_original=float(parsing_result.metadata.total_amount) if parsing_result.metadata.total_amount else None,
+            parsing_success_rate=parsing_result.parsing_success_rate,
+            products_found=len(parsing_result.products),
+            parsing_errors=parsing_result.parsing_errors
+        )
+        
+        # Store batch record and get the generated ID
+        created_batch = await self.db_service.create_upload_batch(batch_data)
+        actual_batch_id = str(created_batch.id)
+        logger.info(f"Created upload batch with ID: {actual_batch_id}")
+        
+        # Store product records using the actual batch ID from database
         for product in parsing_result.products:
-            product_data = {
-                'id': str(uuid.uuid4()),
-                'upload_batch_id': batch_id,
-                'supplier_sku': product.supplier_sku,
-                'manufacturer': product.manufacturer,
-                'manufacturer_sku': product.manufacturer_sku,
-                'category': product.category,
-                'name': product.product_name,
-                'quantity_ordered': product.quantity,
-                'price_usd': float(product.price_usd),
-                'line_total_usd': float(product.line_total_usd),
-                'origin_country': product.origin_country,
-                'tariff_code': product.tariff_code,
-                'raw_description': product.raw_description,
-                'line_number': product.line_number,
-                'created_at': datetime.utcnow(),
-                'updated_at': datetime.utcnow()
-            }
+            product_data = ProductCreate(
+                batch_id=actual_batch_id,
+                supplier_id=str(supplier_id),
+                supplier_sku=product.supplier_sku,
+                supplier_name=product.product_name,
+                manufacturer=product.manufacturer,
+                manufacturer_sku=product.manufacturer_sku,
+                category=product.category,
+                quantity_ordered=product.quantity,
+                supplier_price_usd=float(product.price_usd),
+                line_total_usd=float(product.line_total_usd),
+                origin_country=product.origin_country,
+                tariff_code=product.tariff_code,
+                raw_description=product.raw_description,
+                line_number=product.line_number
+            )
             
             await self.db_service.create_product(product_data)
         
@@ -313,23 +333,25 @@ class InvoiceProcessorService:
             Dict with invoice details or None if not found
         """
         try:
+            from uuid import UUID
+            
             # Get batch information
-            batch = await self.db_service.get_upload_batch(batch_id)
+            batch = await self.db_service.get_upload_batch_by_id(UUID(batch_id))
             if not batch:
                 return None
             
             # Get associated products
-            products = await self.db_service.get_products_by_batch(batch_id)
+            products = await self.db_service.get_products(batch_id=UUID(batch_id))
             
             return {
-                'batch': batch,
-                'products': products,
+                'batch': batch.dict() if hasattr(batch, 'dict') else batch,
+                'products': [p.dict() if hasattr(p, 'dict') else p for p in products],
                 'summary': {
                     'total_products': len(products),
-                    'parsing_success_rate': batch.get('parsing_success_rate', 0),
-                    'supplier': batch.get('supplier_code'),
-                    'invoice_number': batch.get('invoice_number'),
-                    'processing_date': batch.get('created_at')
+                    'parsing_success_rate': batch.parsing_success_rate if hasattr(batch, 'parsing_success_rate') else 0,
+                    'supplier': batch.supplier_code if hasattr(batch, 'supplier_code') else None,
+                    'invoice_number': batch.invoice_number if hasattr(batch, 'invoice_number') else None,
+                    'processing_date': batch.created_at if hasattr(batch, 'created_at') else None
                 }
             }
             
@@ -348,16 +370,18 @@ class InvoiceProcessorService:
             Download URL or None if failed
         """
         try:
+            from uuid import UUID
+            
             # Get batch to find S3 key
-            batch = await self.db_service.get_upload_batch(batch_id)
-            if not batch or not batch.get('s3_key'):
+            batch = await self.db_service.get_upload_batch_by_id(UUID(batch_id))
+            if not batch or not hasattr(batch, 's3_key') or not batch.s3_key:
                 return None
             
             # Generate presigned URL
-            download_url, expires_at = self.s3_manager.generate_download_url(batch['s3_key'])
+            download_url, expires_at = self.s3_manager.generate_download_url(batch.s3_key)
             
-            # Update download count
-            await self.db_service.increment_download_count(batch_id)
+            # Note: increment_download_count method doesn't exist in database service
+            # This would need to be implemented if download tracking is required
             
             return download_url
             

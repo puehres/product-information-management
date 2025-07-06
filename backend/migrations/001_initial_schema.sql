@@ -4,16 +4,45 @@
 -- Enable UUID extension for primary keys
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create enum types for better data integrity
-CREATE TYPE file_type AS ENUM ('pdf', 'csv', 'xlsx', 'manual');
-CREATE TYPE batch_status AS ENUM ('uploaded', 'processing', 'completed', 'failed', 'review_required');
-CREATE TYPE product_status AS ENUM ('draft', 'processing', 'scraped', 'translated', 'ready', 'exported', 'failed');
-CREATE TYPE image_type AS ENUM ('main', 'additional', 'detail', 'manual_upload');
-CREATE TYPE processing_status AS ENUM ('pending', 'processing', 'completed', 'failed');
+-- Create enum types for better data integrity (idempotent)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'file_type') THEN
+        CREATE TYPE file_type AS ENUM ('pdf', 'csv', 'xlsx', 'manual');
+    END IF;
+END $$;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'batch_status') THEN
+        CREATE TYPE batch_status AS ENUM ('uploaded', 'processing', 'completed', 'failed', 'review_required');
+    END IF;
+END $$;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'product_status') THEN
+        CREATE TYPE product_status AS ENUM ('draft', 'processing', 'scraped', 'translated', 'ready', 'exported', 'failed');
+    END IF;
+END $$;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'image_type') THEN
+        CREATE TYPE image_type AS ENUM ('main', 'additional', 'detail', 'manual_upload');
+    END IF;
+END $$;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'processing_status') THEN
+        CREATE TYPE processing_status AS ENUM ('pending', 'processing', 'completed', 'failed');
+    END IF;
+END $$;
 
 -- Table 1: suppliers
 -- Stores supplier configuration and scraping settings
-CREATE TABLE suppliers (
+CREATE TABLE IF NOT EXISTS suppliers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL UNIQUE,
     code VARCHAR(10) NOT NULL UNIQUE,
@@ -28,7 +57,7 @@ CREATE TABLE suppliers (
 
 -- Table 2: upload_batches
 -- Tracks file uploads and processing batches
-CREATE TABLE upload_batches (
+CREATE TABLE IF NOT EXISTS upload_batches (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     supplier_id UUID NOT NULL REFERENCES suppliers(id) ON DELETE CASCADE,
     batch_name VARCHAR(255) NOT NULL,
@@ -49,7 +78,7 @@ CREATE TABLE upload_batches (
 
 -- Table 3: products
 -- Core product data with Gambio export fields
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     batch_id UUID NOT NULL REFERENCES upload_batches(id) ON DELETE CASCADE,
     supplier_id UUID NOT NULL REFERENCES suppliers(id) ON DELETE CASCADE,
@@ -99,7 +128,7 @@ CREATE TABLE products (
 
 -- Table 4: images
 -- Image metadata and processing information
-CREATE TABLE images (
+CREATE TABLE IF NOT EXISTS images (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     
@@ -133,34 +162,34 @@ CREATE TABLE images (
     CONSTRAINT positive_file_size CHECK (file_size > 0)
 );
 
--- Create indexes for performance optimization
+-- Create indexes for performance optimization (idempotent)
 
 -- Suppliers indexes
-CREATE INDEX idx_suppliers_code ON suppliers(code);
-CREATE INDEX idx_suppliers_active ON suppliers(active);
+CREATE INDEX IF NOT EXISTS idx_suppliers_code ON suppliers(code);
+CREATE INDEX IF NOT EXISTS idx_suppliers_active ON suppliers(active);
 
 -- Upload batches indexes
-CREATE INDEX idx_upload_batches_supplier_id ON upload_batches(supplier_id);
-CREATE INDEX idx_upload_batches_status ON upload_batches(status);
-CREATE INDEX idx_upload_batches_created_at ON upload_batches(created_at);
+CREATE INDEX IF NOT EXISTS idx_upload_batches_supplier_id ON upload_batches(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_upload_batches_status ON upload_batches(status);
+CREATE INDEX IF NOT EXISTS idx_upload_batches_created_at ON upload_batches(created_at);
 
 -- Products indexes
-CREATE INDEX idx_products_batch_id ON products(batch_id);
-CREATE INDEX idx_products_supplier_id ON products(supplier_id);
-CREATE INDEX idx_products_supplier_sku ON products(supplier_sku);
-CREATE INDEX idx_products_status ON products(status);
-CREATE INDEX idx_products_requires_review ON products(requires_review);
-CREATE INDEX idx_products_created_at ON products(created_at);
+CREATE INDEX IF NOT EXISTS idx_products_batch_id ON products(batch_id);
+CREATE INDEX IF NOT EXISTS idx_products_supplier_id ON products(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_products_supplier_sku ON products(supplier_sku);
+CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+CREATE INDEX IF NOT EXISTS idx_products_requires_review ON products(requires_review);
+CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at);
 
 -- Images indexes
-CREATE INDEX idx_images_product_id ON images(product_id);
-CREATE INDEX idx_images_processing_status ON images(processing_status);
-CREATE INDEX idx_images_image_type ON images(image_type);
+CREATE INDEX IF NOT EXISTS idx_images_product_id ON images(product_id);
+CREATE INDEX IF NOT EXISTS idx_images_processing_status ON images(processing_status);
+CREATE INDEX IF NOT EXISTS idx_images_image_type ON images(image_type);
 
 -- Create composite indexes for common query patterns
-CREATE INDEX idx_products_batch_status ON products(batch_id, status);
-CREATE INDEX idx_products_supplier_status ON products(supplier_id, status);
-CREATE INDEX idx_images_product_type_sequence ON images(product_id, image_type, sequence_number);
+CREATE INDEX IF NOT EXISTS idx_products_batch_status ON products(batch_id, status);
+CREATE INDEX IF NOT EXISTS idx_products_supplier_status ON products(supplier_id, status);
+CREATE INDEX IF NOT EXISTS idx_images_product_type_sequence ON images(product_id, image_type, sequence_number);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -171,18 +200,38 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Apply updated_at triggers to all tables
-CREATE TRIGGER update_suppliers_updated_at BEFORE UPDATE ON suppliers
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Apply updated_at triggers to all tables (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_suppliers_updated_at') THEN
+        CREATE TRIGGER update_suppliers_updated_at BEFORE UPDATE ON suppliers
+            FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;
 
-CREATE TRIGGER update_upload_batches_updated_at BEFORE UPDATE ON upload_batches
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_upload_batches_updated_at') THEN
+        CREATE TRIGGER update_upload_batches_updated_at BEFORE UPDATE ON upload_batches
+            FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;
 
-CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_products_updated_at') THEN
+        CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products
+            FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;
 
-CREATE TRIGGER update_images_updated_at BEFORE UPDATE ON images
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_images_updated_at') THEN
+        CREATE TRIGGER update_images_updated_at BEFORE UPDATE ON images
+            FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;
 
 -- Add helpful comments for documentation
 COMMENT ON TABLE suppliers IS 'Supplier configuration and scraping settings';

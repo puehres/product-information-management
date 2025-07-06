@@ -139,7 +139,7 @@ class DatabaseService:
             Created supplier.
         """
         try:
-            data = supplier_data.dict()
+            data = supplier_data.model_dump(mode='json')
             result = self.client.table('suppliers').insert(data).execute()
             
             if result.data:
@@ -297,7 +297,7 @@ class DatabaseService:
             Created upload batch.
         """
         try:
-            data = batch_data.dict()
+            data = batch_data.model_dump(mode='json')
             result = self.client.table('upload_batches').insert(data).execute()
             
             if result.data:
@@ -441,7 +441,7 @@ class DatabaseService:
             Created product.
         """
         try:
-            data = product_data.dict()
+            data = product_data.model_dump(mode='json')
             result = self.client.table('products').insert(data).execute()
             
             if result.data:
@@ -526,7 +526,7 @@ class DatabaseService:
             Created image.
         """
         try:
-            data = image_data.dict()
+            data = image_data.model_dump(mode='json')
             result = self.client.table('images').insert(data).execute()
             
             if result.data:
