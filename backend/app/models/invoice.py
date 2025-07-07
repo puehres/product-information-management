@@ -125,7 +125,7 @@ class InvoiceUploadResponse(BaseModel):
     success: bool = Field(..., description="Upload success status")
     batch_id: Optional[str] = Field(None, description="Created batch ID")
     supplier: Optional[str] = Field(None, description="Detected supplier")
-    products_found: Optional[int] = Field(None, description="Number of products found")
+    total_products: Optional[int] = Field(None, description="Number of products found")
     parsing_success_rate: Optional[float] = Field(None, description="Parsing success rate")
     invoice_metadata: Optional[Dict[str, Any]] = Field(None, description="Invoice metadata")
     s3_key: Optional[str] = Field(None, description="S3 storage key")
@@ -144,11 +144,36 @@ class InvoiceDownloadResponse(BaseModel):
     error: Optional[str] = Field(None, description="Error message if failed")
 
 
+class InvoiceSummary(BaseModel):
+    """Summary information for invoice list display."""
+    batch_id: str = Field(..., description="Batch identifier")
+    supplier: str = Field(..., description="Supplier code")
+    invoice_number: Optional[str] = Field(None, description="Invoice number")
+    invoice_date: Optional[str] = Field(None, description="Invoice date")
+    total_products: int = Field(0, description="Number of products found")
+    processing_date: datetime = Field(..., description="When invoice was processed")
+    original_filename: str = Field(..., description="Original uploaded filename")
+    parsing_success_rate: float = Field(0.0, description="Parsing success rate percentage")
+    file_size_mb: float = Field(0.0, description="File size in megabytes")
+    currency: Optional[str] = Field(None, description="Invoice currency")
+    total_amount: Optional[float] = Field(None, description="Total invoice amount")
+
+
+class PaginationInfo(BaseModel):
+    """Pagination metadata for API responses."""
+    limit: int = Field(..., description="Items per page")
+    offset: int = Field(..., description="Items skipped")
+    next_offset: Optional[int] = Field(None, description="Next page offset")
+    has_more: bool = Field(..., description="More items available")
+
+
 class InvoiceListResponse(BaseModel):
-    """Response for listing invoices."""
+    """Enhanced response for invoice list endpoint."""
     success: bool = Field(..., description="Request success status")
-    invoices: List[Dict[str, Any]] = Field(..., description="List of invoice summaries")
+    invoices: List[InvoiceSummary] = Field(..., description="List of invoice summaries")
     total_count: int = Field(..., ge=0, description="Total number of invoices")
+    has_more: bool = Field(..., description="More invoices available")
+    pagination: PaginationInfo = Field(..., description="Pagination metadata")
     error: Optional[str] = Field(None, description="Error message if failed")
 
 

@@ -6,13 +6,16 @@ PDF invoices with comprehensive error handling and validation.
 """
 
 import structlog
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
+from datetime import datetime
 from app.models.invoice import (
     InvoiceUploadResponse,
     InvoiceDownloadResponse,
-    InvoiceListResponse
+    InvoiceListResponse,
+    InvoiceSummary,
+    PaginationInfo
 )
 from app.services.invoice_processor import InvoiceProcessorService
 from app.core.config import get_settings
@@ -106,7 +109,7 @@ async def upload_invoice(
                 "Invoice processing completed successfully",
                 batch_id=result.batch_id,
                 supplier=result.supplier,
-                products_found=result.products_found
+                total_products=result.total_products
             )
         else:
             logger.warning(
@@ -240,60 +243,139 @@ async def get_invoice_details(batch_id: str):
 
 @router.get("/invoices", response_model=InvoiceListResponse)
 async def list_invoices(
-    limit: int = 50,
-    offset: int = 0,
-    supplier: Optional[str] = None
+    limit: int = Query(50, ge=1, le=100, description="Number of invoices to return"),
+    offset: int = Query(0, ge=0, description="Number of invoices to skip"),
+    supplier: Optional[str] = Query(None, description="Filter by supplier code"),
+    date_from: Optional[str] = Query(None, description="Filter invoices after this date (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Filter invoices before this date (YYYY-MM-DD)"),
+    search: Optional[str] = Query(None, min_length=1, description="Search in filename or invoice number"),
+    sort_by: str = Query("created_at", description="Sort field"),
+    sort_order: str = Query("desc", regex="^(asc|desc)$", description="Sort order")
 ) -> InvoiceListResponse:
     """
-    List processed invoices with pagination.
+    List processed invoices with comprehensive filtering and pagination.
     
     Args:
-        limit: Maximum number of invoices to return (default: 50)
-        offset: Number of invoices to skip (default: 0)
-        supplier: Filter by supplier code (optional)
+        limit: Number of invoices to return (1-100)
+        offset: Number of invoices to skip
+        supplier: Filter by supplier code
+        date_from: Filter invoices after this date (YYYY-MM-DD)
+        date_to: Filter invoices before this date (YYYY-MM-DD)
+        search: Search in filename or invoice number
+        sort_by: Field to sort by
+        sort_order: Sort order (asc/desc)
         
     Returns:
-        InvoiceListResponse: List of invoice summaries
+        InvoiceListResponse: List of invoice summaries with pagination
         
     Raises:
         HTTPException: For invalid parameters or database errors
     """
     logger.info(
-        "Invoice list request",
+        "Invoice list request received",
         limit=limit,
         offset=offset,
-        supplier=supplier
+        supplier=supplier,
+        date_from=date_from,
+        date_to=date_to,
+        search=search
     )
     
-    # Validate parameters
-    if limit < 1 or limit > 100:
-        raise HTTPException(
-            status_code=400,
-            detail="Limit must be between 1 and 100"
-        )
-    
-    if offset < 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Offset must be non-negative"
-        )
-    
     try:
-        # TODO: Implement database query for listing invoices
-        # This would require extending the database service
+        # Validate and parse date parameters
+        parsed_date_from = None
+        parsed_date_to = None
         
-        # For now, return empty list
+        if date_from:
+            try:
+                parsed_date_from = datetime.fromisoformat(date_from)
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid date_from format. Use YYYY-MM-DD"
+                )
+        
+        if date_to:
+            try:
+                parsed_date_to = datetime.fromisoformat(date_to)
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid date_to format. Use YYYY-MM-DD"
+                )
+        
+        # Get database service
+        from app.services.database_service import get_database_service
+        db_service = get_database_service()
+        
+        # Query with filters
+        batches, total_count = await db_service.list_upload_batches_with_filters(
+            limit=limit,
+            offset=offset,
+            supplier=supplier,
+            date_from=parsed_date_from,
+            date_to=parsed_date_to,
+            search=search,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+        
+        # Convert to response format
+        invoice_summaries = []
+        for batch in batches:
+            # Handle missing fields gracefully
+            summary = InvoiceSummary(
+                batch_id=str(batch.id),
+                supplier=getattr(batch, 'supplier_code', 'unknown') or "unknown",
+                invoice_number=getattr(batch, 'invoice_number', None),
+                invoice_date=getattr(batch, 'invoice_date', None),
+                total_products=getattr(batch, 'total_products', 0),
+                processing_date=batch.created_at,
+                original_filename=getattr(batch, 'original_filename', 'unknown') or "unknown",
+                parsing_success_rate=getattr(batch, 'parsing_success_rate', 0.0) or 0.0,
+                file_size_mb=round((getattr(batch, 'file_size_bytes', 0) or 0) / (1024 * 1024), 2),
+                currency=getattr(batch, 'currency_code', None),
+                total_amount=float(getattr(batch, 'total_amount_original', 0)) if getattr(batch, 'total_amount_original', None) else None
+            )
+            invoice_summaries.append(summary)
+        
+        # Calculate pagination info - handle None total_count
+        total_count = total_count or 0
+        has_more = (offset + limit) < total_count
+        next_offset = offset + limit if has_more else None
+        
+        pagination = PaginationInfo(
+            limit=limit,
+            offset=offset,
+            next_offset=next_offset,
+            has_more=has_more
+        )
+        
+        logger.info(
+            "Invoice list request completed",
+            total_count=total_count,
+            returned_count=len(invoice_summaries),
+            has_more=has_more
+        )
+        
         return InvoiceListResponse(
             success=True,
-            invoices=[],
-            total_count=0,
+            invoices=invoice_summaries,
+            total_count=total_count,
+            has_more=has_more,
+            pagination=pagination,
             error=None
         )
         
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         logger.error(
             "Error listing invoices",
-            error=str(e)
+            error=str(e),
+            limit=limit,
+            offset=offset
         )
         raise HTTPException(
             status_code=500,

@@ -163,7 +163,7 @@ class LawnFawnParsingStrategy(InvoiceParsingStrategy):
     
     def parse_product_table(self, tables: List[List[List[str]]]) -> List[ParsedProduct]:
         """
-        Parse LawnFawn product table.
+        Parse LawnFawn product tables (may be multiple tables across pages).
         
         Expected format:
         Qty | Description | Price | Origin | Tariff Code | Amount
@@ -175,38 +175,47 @@ class LawnFawnParsingStrategy(InvoiceParsingStrategy):
         Returns:
             List[ParsedProduct]: Parsed products
         """
-        logger.debug("Parsing LawnFawn product table")
+        logger.debug("Parsing LawnFawn product tables")
         
-        # Find the main product table
-        product_table = self.find_product_table(tables)
-        if not product_table:
-            self.add_parsing_error("No product table found")
+        # Find ALL product tables (LawnFawn invoices can span multiple pages)
+        product_tables = self.find_all_product_tables(tables)
+        if not product_tables:
+            self.add_parsing_error("No product tables found")
             return []
         
-        products = []
-        header_row = product_table[0] if product_table else []
+        logger.info(f"Found {len(product_tables)} product tables")
         
-        # Find column indices
-        column_indices = self._find_column_indices(header_row)
+        all_products = []
+        global_row_number = 1  # Track row numbers across all tables
         
-        logger.debug(
-            "Column mapping",
-            columns=column_indices,
-            header=header_row
-        )
+        for table_idx, product_table in enumerate(product_tables):
+            logger.debug(f"Processing product table {table_idx + 1} with {len(product_table)} rows")
+            
+            header_row = product_table[0] if product_table else []
+            
+            # Find column indices
+            column_indices = self._find_column_indices(header_row)
+            
+            logger.debug(
+                "Column mapping for table",
+                table_index=table_idx + 1,
+                columns=column_indices,
+                header=header_row
+            )
+            
+            # Parse data rows (skip header)
+            for row_idx, row in enumerate(product_table[1:], start=1):
+                global_row_number += 1
+                try:
+                    product = self._parse_product_row(row, column_indices, global_row_number)
+                    if product:
+                        all_products.append(product)
+                except Exception as e:
+                    self.add_parsing_error(f"Failed to parse product row: {e}", global_row_number)
+                    continue
         
-        # Parse data rows (skip header)
-        for row_idx, row in enumerate(product_table[1:], start=2):
-            try:
-                product = self._parse_product_row(row, column_indices, row_idx)
-                if product:
-                    products.append(product)
-            except Exception as e:
-                self.add_parsing_error(f"Failed to parse product row: {e}", row_idx)
-                continue
-        
-        logger.info(f"Parsed {len(products)} products from table")
-        return products
+        logger.info(f"Parsed {len(all_products)} products from {len(product_tables)} tables")
+        return all_products
     
     def _find_column_indices(self, header_row: List[str]) -> dict:
         """
@@ -352,3 +361,43 @@ class LawnFawnParsingStrategy(InvoiceParsingStrategy):
         product_name = re.sub(r'^-\s*|\s*-$', '', product_name).strip()
         
         return category, product_name
+    
+    def find_all_product_tables(self, tables: List[List[List[str]]]) -> List[List[List[str]]]:
+        """
+        Find ALL product tables from extracted tables (LawnFawn invoices span multiple pages).
+        
+        Args:
+            tables: List of extracted tables
+            
+        Returns:
+            List[List[List[str]]]: All product tables found
+        """
+        if not tables:
+            return []
+        
+        product_tables = []
+        product_keywords = ['qty', 'quantity', 'description', 'price', 'amount', 'tariff']
+        
+        for table_idx, table in enumerate(tables):
+            if len(table) < 2:  # Need at least header + 1 data row
+                continue
+            
+            # Check if header row contains product keywords
+            header_row = table[0] if table else []
+            header_text = ' '.join(header_row).lower()
+            
+            keyword_matches = sum(1 for keyword in product_keywords if keyword in header_text)
+            
+            # If we find multiple product keywords and it has 7 columns (LawnFawn format), it's a product table
+            if keyword_matches >= 3 and len(header_row) == 7:
+                logger.debug(
+                    "Found product table",
+                    table_index=table_idx,
+                    rows=len(table),
+                    columns=len(header_row),
+                    keyword_matches=keyword_matches
+                )
+                product_tables.append(table)
+        
+        logger.info(f"Found {len(product_tables)} product tables total")
+        return product_tables

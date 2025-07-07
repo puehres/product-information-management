@@ -178,7 +178,7 @@ class InvoiceProcessorService:
                 "Invoice processing completed successfully",
                 batch_id=batch_id,
                 supplier=detection_result.supplier_code,
-                products_found=len(parsing_result.products),
+                total_products=len(parsing_result.products),
                 success_rate=parsing_result.parsing_success_rate
             )
             
@@ -186,7 +186,7 @@ class InvoiceProcessorService:
                 success=True,
                 batch_id=batch_id,
                 supplier=detection_result.supplier_code,
-                products_found=len(parsing_result.products),
+                total_products=len(parsing_result.products),
                 parsing_success_rate=parsing_result.parsing_success_rate,
                 invoice_metadata={
                     'invoice_number': parsing_result.metadata.invoice_number,
@@ -286,40 +286,63 @@ class InvoiceProcessorService:
             currency_code=parsing_result.metadata.currency,
             total_amount_original=float(parsing_result.metadata.total_amount) if parsing_result.metadata.total_amount else None,
             parsing_success_rate=parsing_result.parsing_success_rate,
-            products_found=len(parsing_result.products),
-            parsing_errors=parsing_result.parsing_errors
+                total_products=len(parsing_result.products)
         )
         
-        # Store batch record and get the generated ID
-        created_batch = await self.db_service.create_upload_batch(batch_data)
-        actual_batch_id = str(created_batch.id)
-        logger.info(f"Created upload batch with ID: {actual_batch_id}")
+        # Store batch record using the provided batch_id
+        created_batch = await self.db_service.create_upload_batch(batch_data, batch_id)
+        logger.info(f"Created upload batch with ID: {batch_id}")
         
-        # Store product records using the actual batch ID from database
+        # Store product records using the provided batch ID
+        products_stored = 0
+        products_failed = 0
+        
         for product in parsing_result.products:
-            product_data = ProductCreate(
-                batch_id=actual_batch_id,
-                supplier_id=str(supplier_id),
-                supplier_sku=product.supplier_sku,
-                supplier_name=product.product_name,
-                manufacturer=product.manufacturer,
-                manufacturer_sku=product.manufacturer_sku,
-                category=product.category,
-                quantity_ordered=product.quantity,
-                supplier_price_usd=float(product.price_usd),
-                line_total_usd=float(product.line_total_usd),
-                origin_country=product.origin_country,
-                tariff_code=product.tariff_code,
-                raw_description=product.raw_description,
-                line_number=product.line_number
-            )
-            
-            await self.db_service.create_product(product_data)
+            try:
+                product_data = ProductCreate(
+                    batch_id=batch_id,
+                    supplier_id=str(supplier_id),
+                    supplier_sku=product.supplier_sku,
+                    supplier_name=product.product_name,
+                    manufacturer=product.manufacturer,
+                    manufacturer_sku=product.manufacturer_sku,
+                    category=product.category,
+                    quantity_ordered=product.quantity,
+                    supplier_price_usd=float(product.price_usd),
+                    line_total_usd=float(product.line_total_usd),
+                    origin_country=product.origin_country,
+                    tariff_code=product.tariff_code,
+                    raw_description=product.raw_description,
+                    line_number=product.line_number
+                )
+                
+                await self.db_service.create_product(product_data)
+                products_stored += 1
+                
+            except Exception as e:
+                logger.warning(f"Failed to store product {product.supplier_sku}: {e}")
+                products_failed += 1
+        
+        # Update batch with final counts and status
+        from app.models.upload_batch import UploadBatchUpdate
+        from app.models.base import BatchStatus
+        from uuid import UUID
+        
+        batch_update = UploadBatchUpdate(
+            total_products=len(parsing_result.products),
+            processed_products=products_stored,
+            failed_products=products_failed,
+            status=BatchStatus.COMPLETED
+        )
+        
+        await self.db_service.update_upload_batch(UUID(batch_id), batch_update)
         
         logger.info(
-            "Processing results stored",
+            "Processing results stored and batch updated",
             batch_id=batch_id,
-            products_stored=len(parsing_result.products)
+            products_stored=products_stored,
+            products_failed=products_failed,
+            total_products=len(parsing_result.products)
         )
     
     async def get_invoice_details(self, batch_id: str) -> Optional[Dict[str, Any]]:

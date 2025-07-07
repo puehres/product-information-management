@@ -6,8 +6,9 @@ with comprehensive error handling and transaction support.
 """
 
 import asyncio
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any, Union, Tuple
 from uuid import UUID
+from datetime import datetime
 import structlog
 from ..core.database import get_supabase_client, supabase_manager
 from ..models import (
@@ -286,18 +287,24 @@ class DatabaseService:
             logger.error("Failed to get upload batch by ID", batch_id=str(batch_id), error=str(e))
             raise
     
-    async def create_upload_batch(self, batch_data: UploadBatchCreate) -> UploadBatch:
+    async def create_upload_batch(self, batch_data: UploadBatchCreate, batch_id: Optional[str] = None) -> UploadBatch:
         """
         Create a new upload batch.
         
         Args:
             batch_data: Batch creation data.
+            batch_id: Optional custom batch ID to use instead of auto-generated.
             
         Returns:
             Created upload batch.
         """
         try:
             data = batch_data.model_dump(mode='json')
+            
+            # Use custom batch ID if provided
+            if batch_id:
+                data['id'] = batch_id
+            
             result = self.client.table('upload_batches').insert(data).execute()
             
             if result.data:
@@ -599,6 +606,84 @@ class DatabaseService:
             logger.error("Failed to get image by ID", image_id=str(image_id), error=str(e))
             raise
     
+    async def list_upload_batches_with_filters(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        supplier: Optional[str] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+        search: Optional[str] = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc"
+    ) -> Tuple[List[UploadBatch], int]:
+        """
+        List upload batches with comprehensive filtering and pagination.
+        
+        Args:
+            limit: Maximum number of batches to return
+            offset: Number of batches to skip
+            supplier: Filter by supplier code
+            date_from: Filter batches created after this date
+            date_to: Filter batches created before this date
+            search: Search in filename or invoice number
+            sort_by: Field to sort by
+            sort_order: Sort order (asc/desc)
+            
+        Returns:
+            Tuple of (batches_list, total_count)
+        """
+        try:
+            # Build base query
+            query = self.client.table('upload_batches').select('*')
+            count_query = self.client.table('upload_batches').select('count')
+            
+            # Apply filters to both queries
+            if supplier:
+                query = query.eq('supplier_code', supplier)
+                count_query = count_query.eq('supplier_code', supplier)
+            
+            if date_from:
+                query = query.gte('created_at', date_from.isoformat())
+                count_query = count_query.gte('created_at', date_from.isoformat())
+                
+            if date_to:
+                query = query.lte('created_at', date_to.isoformat())
+                count_query = count_query.lte('created_at', date_to.isoformat())
+            
+            if search:
+                # Use ilike for case-insensitive search
+                search_pattern = f'%{search}%'
+                search_filter = f'original_filename.ilike.{search_pattern},invoice_number.ilike.{search_pattern}'
+                query = query.or_(search_filter)
+                count_query = count_query.or_(search_filter)
+            
+            # Get total count first
+            total_result = count_query.execute()
+            total_count = total_result.count or 0
+            
+            # Apply sorting and pagination
+            desc = sort_order.lower() == 'desc'
+            query = query.order(sort_by, desc=desc)
+            query = query.range(offset, offset + limit - 1)
+            
+            # Execute query
+            result = query.execute()
+            batches = [UploadBatch(**item) for item in result.data]
+            
+            logger.info(
+                "Listed upload batches with filters",
+                total_count=total_count,
+                returned_count=len(batches),
+                filters={'supplier': supplier, 'search': search}
+            )
+            
+            return batches, total_count
+            
+        except Exception as e:
+            logger.error("Failed to list upload batches with filters", error=str(e))
+            raise
+
     # Health and utility operations
     
     async def health_check(self) -> Dict[str, Any]:
