@@ -108,8 +108,8 @@ async def test_s3_connectivity():
             print(f"❌ Upload test failed: {str(e)}")
             return False
         
-        # Test 3: Test presigned URL generation
-        print("\n🔗 Test 3: Presigned URL Generation")
+        # Test 3: Test presigned URL generation and validation
+        print("\n🔗 Test 3: Presigned URL Generation & Validation")
         try:
             # Extract S3 key from the uploaded file URL
             s3_key = s3_url.split(f"{settings.s3_bucket_name}/")[-1]
@@ -120,6 +120,53 @@ async def test_s3_connectivity():
                 print(f"✓ Presigned URL generated successfully")
                 print(f"  URL length: {len(presigned_url)} characters")
                 print(f"  URL preview: {presigned_url[:80]}...")
+                
+                # Enhanced validation: Check URL format structure
+                print(f"  🔍 Validating URL format structure...")
+                
+                # Validate AWS signature components are present
+                required_params = [
+                    "X-Amz-Algorithm=AWS4-HMAC-SHA256",
+                    "X-Amz-Signature=",
+                    "X-Amz-Expires=",
+                    "X-Amz-Date=",
+                    "X-Amz-SignedHeaders="
+                ]
+                
+                missing_params = []
+                for param in required_params:
+                    if param not in presigned_url:
+                        missing_params.append(param)
+                
+                if missing_params:
+                    print(f"  ❌ Missing required AWS signature parameters:")
+                    for param in missing_params:
+                        print(f"    - {param}")
+                    return False
+                else:
+                    print(f"  ✓ All required AWS signature parameters present")
+                
+                # Enhanced validation: Test URL accessibility
+                print(f"  🌐 Testing URL accessibility...")
+                try:
+                    import requests
+                    response = requests.head(presigned_url, timeout=10)
+                    
+                    if response.status_code == 200:
+                        print(f"  ✅ URL is accessible (200 OK)")
+                        print(f"    Content-Length: {response.headers.get('Content-Length', 'unknown')}")
+                        print(f"    Content-Type: {response.headers.get('Content-Type', 'unknown')}")
+                    else:
+                        print(f"  ❌ URL accessibility failed: {response.status_code}")
+                        print(f"    This indicates the presigned URL generation fix is needed")
+                        return False
+                        
+                except ImportError:
+                    print(f"  ⚠️  requests library not available, skipping URL accessibility test")
+                except Exception as url_test_error:
+                    print(f"  ❌ URL accessibility test failed: {str(url_test_error)}")
+                    return False
+                    
             else:
                 print(f"❌ Presigned URL generation failed")
                 return False

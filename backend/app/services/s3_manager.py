@@ -28,21 +28,40 @@ class S3InvoiceManager:
         """Initialize S3 client with configuration."""
         self.settings = get_settings()
         
-        # Validate S3 configuration
-        if not self.settings.aws_access_key_id or not self.settings.aws_secret_access_key:
-            raise ValueError("AWS credentials not configured")
-        
         try:
-            # Create session with explicit credentials
-            session = boto3.Session(
-                aws_access_key_id=self.settings.aws_access_key_id,
-                aws_secret_access_key=self.settings.aws_secret_access_key,
-                region_name=self.settings.aws_region
-            )
+            # Use default credential chain first (supports temporary credentials)
+            session = boto3.Session(region_name=self.settings.aws_region)
+            
+            # Check if default credentials are available
+            try:
+                credentials = session.get_credentials()
+                if credentials:
+                    logger.info(
+                        "Using default credential chain",
+                        access_key=credentials.access_key,
+                        has_session_token=bool(credentials.token),
+                        region=self.settings.aws_region
+                    )
+                else:
+                    raise NoCredentialsError("No credentials found in default chain")
+            except Exception:
+                # Fallback to explicit credentials if default chain fails
+                if not self.settings.aws_access_key_id or not self.settings.aws_secret_access_key:
+                    raise ValueError("AWS credentials not configured")
+                
+                logger.info("Falling back to explicit credentials")
+                session = boto3.Session(
+                    aws_access_key_id=self.settings.aws_access_key_id,
+                    aws_secret_access_key=self.settings.aws_secret_access_key,
+                    region_name=self.settings.aws_region
+                )
             
             # Create S3 client with proper configuration for eu-north-1
             config = boto3.session.Config(
                 signature_version='s3v4',  # Required for newer regions
+                s3={
+                    'addressing_style': 'virtual'  # Use virtual-hosted style URLs
+                },
                 retries={
                     'max_attempts': 3,
                     'mode': 'adaptive'
@@ -52,15 +71,14 @@ class S3InvoiceManager:
             
             self.s3_client = session.client('s3', config=config)
             
+            # Log credential type for debugging
+            final_credentials = session.get_credentials()
             logger.info(
                 "S3 client initialized",
                 region=self.settings.aws_region,
-                bucket=self.settings.s3_bucket_name
+                bucket=self.settings.s3_bucket_name,
+                credential_type="temporary" if final_credentials.token else "permanent"
             )
-            
-            # Test connection (skip for now due to credential propagation issues)
-            # self._validate_bucket_access()
-            logger.info("S3 client initialized (validation skipped due to new access key)")
             
         except NoCredentialsError as e:
             logger.error("AWS credentials not found", error=str(e))
@@ -149,7 +167,7 @@ class S3InvoiceManager:
         expires_in: Optional[int] = None
     ) -> Tuple[str, datetime]:
         """
-        Generate presigned URL for secure invoice download.
+        Generate presigned URL for secure invoice download using correct boto3 pattern.
         
         Args:
             s3_key: S3 object key
@@ -171,11 +189,13 @@ class S3InvoiceManager:
                 expires_in=expires_in
             )
             
+            # CRITICAL: Use correct boto3 pattern from AWS documentation
             presigned_url = self.s3_client.generate_presigned_url(
-                'get_object',
+                ClientMethod='get_object',  # ✅ Explicit ClientMethod parameter
                 Params={
                     'Bucket': self.settings.s3_bucket_name,
                     'Key': s3_key
+                    # ✅ Remove ResponseContentDisposition - may cause signature issues
                 },
                 ExpiresIn=expires_in
             )
