@@ -497,6 +497,125 @@ class DatabaseService:
             logger.error("Failed to update product", product_id=str(product_id), error=str(e))
             raise
     
+    async def get_product_by_manufacturer_sku(self, manufacturer_sku: str) -> Optional[Product]:
+        """
+        Get a product by manufacturer SKU.
+        
+        Args:
+            manufacturer_sku: Manufacturer SKU to search for.
+            
+        Returns:
+            Product if found, None otherwise.
+        """
+        try:
+            result = self.client.table('products')\
+                .select('*')\
+                .eq('manufacturer_sku', manufacturer_sku)\
+                .execute()
+            
+            if result.data:
+                logger.info("Product found by manufacturer SKU", manufacturer_sku=manufacturer_sku)
+                return Product(**result.data[0])
+            return None
+            
+        except Exception as e:
+            logger.error("Failed to get product by manufacturer SKU", manufacturer_sku=manufacturer_sku, error=str(e))
+            raise
+    
+    async def update_product_review_status(
+        self,
+        product_id: UUID,
+        requires_review: bool,
+        review_notes: Optional[str] = None
+    ) -> Optional[Product]:
+        """
+        Update product review status and notes.
+        
+        Args:
+            product_id: Product ID to update.
+            requires_review: Whether product requires review.
+            review_notes: Optional notes about the review requirement.
+            
+        Returns:
+            Updated product if found, None otherwise.
+        """
+        try:
+            update_data = {
+                'requires_review': requires_review,
+                'review_notes': review_notes
+            }
+            
+            result = self.client.table('products')\
+                .update(update_data)\
+                .eq('id', str(product_id))\
+                .execute()
+            
+            if result.data:
+                logger.info(
+                    "Product review status updated",
+                    product_id=str(product_id),
+                    requires_review=requires_review
+                )
+                return Product(**result.data[0])
+            return None
+            
+        except Exception as e:
+            logger.error(
+                "Failed to update product review status",
+                product_id=str(product_id),
+                error=str(e)
+            )
+            raise
+    
+    async def get_products_requiring_review(
+        self,
+        limit: int = 50,
+        offset: int = 0
+    ) -> Tuple[List[Product], int]:
+        """
+        Get products that require manual review due to conflicts.
+        
+        Args:
+            limit: Maximum number of products to return.
+            offset: Number of products to skip.
+            
+        Returns:
+            Tuple of (products_list, total_count).
+        """
+        try:
+            # Build query for products requiring review
+            query = self.client.table('products')\
+                .select('*')\
+                .eq('requires_review', True)\
+                .order('created_at', desc=True)
+            
+            # Get total count
+            count_query = self.client.table('products')\
+                .select('count')\
+                .eq('requires_review', True)
+            
+            total_result = count_query.execute()
+            total_count = total_result.count or 0
+            
+            # Apply pagination
+            query = query.range(offset, offset + limit - 1)
+            
+            # Execute query
+            result = query.execute()
+            products = [Product(**item) for item in result.data]
+            
+            logger.info(
+                "Retrieved products requiring review",
+                total_count=total_count,
+                returned_count=len(products)
+            )
+            
+            return products, total_count
+            
+        except Exception as e:
+            logger.error("Failed to get products requiring review", error=str(e))
+            raise
+    
     # Image operations
     
     async def get_images_by_product_id(self, product_id: UUID) -> List[Image]:

@@ -48,34 +48,6 @@ def load_environment():
         return False
     return True
 
-def create_supabase_client() -> Client:
-    """Create and return a Supabase client."""
-    url = os.getenv("SUPABASE_URL")
-    service_key = os.getenv("SUPABASE_SERVICE_KEY")
-    
-    if not url or not service_key:
-        raise ValueError("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables")
-    
-    print(f"🔗 Connecting to Supabase: {url}")
-    return create_client(url, service_key)
-
-def execute_sql_file(client: Client, file_path: Path) -> bool:
-    """Execute a SQL file against the database using direct PostgreSQL connection."""
-    try:
-        print(f"📄 Reading SQL file: {file_path}")
-        with open(file_path, 'r', encoding='utf-8') as f:
-            sql_content = f.read()
-        
-        if not sql_content.strip():
-            print(f"⚠️  SQL file is empty: {file_path}")
-            return True
-        
-        # Use direct PostgreSQL connection - skip Supabase REST API entirely
-        return execute_sql_with_psycopg2(sql_content)
-        
-    except Exception as e:
-        print(f"❌ Failed to execute {file_path}: {e}")
-        return False
 
 def execute_sql_with_psycopg2(sql_content: str) -> bool:
     """Execute SQL using direct PostgreSQL connection with proper SSL configuration."""
