@@ -98,8 +98,9 @@ def create_application() -> FastAPI:
         )
     
     # Add API routers
-    from app.api import upload
+    from app.api import upload, enrichment
     app.include_router(upload.router, prefix="/api/v1", tags=["upload"])
+    app.include_router(enrichment.router, prefix="/api/v1", tags=["enrichment"])
     
     # TODO: Add additional routers
     # app.include_router(products.router, prefix="/api/v1/products", tags=["products"])

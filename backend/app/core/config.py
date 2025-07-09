@@ -210,6 +210,156 @@ class Settings(BaseSettings):
         description="List of supported supplier codes for invoice processing"
     )
     
+    # Product Enrichment Configuration
+    firecrawl_base_url: str = Field(
+        default="https://api.firecrawl.dev",
+        description="Firecrawl API base URL"
+    )
+    
+    firecrawl_timeout: int = Field(
+        default=30,
+        description="Firecrawl API timeout in seconds"
+    )
+    
+    firecrawl_max_retries: int = Field(
+        default=3,
+        description="Maximum retry attempts for Firecrawl API"
+    )
+    
+    firecrawl_retry_delay: int = Field(
+        default=2,
+        description="Retry delay for Firecrawl API in seconds"
+    )
+    
+    enrichment_max_concurrent: int = Field(
+        default=5,
+        description="Maximum concurrent enrichment processes"
+    )
+    
+    enrichment_batch_size: int = Field(
+        default=10,
+        description="Batch size for enrichment processing"
+    )
+    
+    enrichment_timeout: int = Field(
+        default=300,
+        description="Enrichment process timeout in seconds"
+    )
+    
+    enrichment_retry_attempts: int = Field(
+        default=3,
+        description="Number of retry attempts for failed enrichments"
+    )
+    
+    enrichment_retry_delay: int = Field(
+        default=5,
+        description="Delay between enrichment retry attempts in seconds"
+    )
+    
+    # LawnFawn Specific Configuration
+    lawnfawn_base_url: str = Field(
+        default="https://www.lawnfawn.com",
+        description="LawnFawn website base URL"
+    )
+    
+    lawnfawn_search_delay: int = Field(
+        default=2,
+        description="Delay between LawnFawn search requests in seconds"
+    )
+    
+    lawnfawn_page_timeout: int = Field(
+        default=15,
+        description="Timeout for LawnFawn page loading in seconds"
+    )
+    
+    # Confidence Score Configuration
+    confidence_exact_match: int = Field(
+        default=100,
+        description="Confidence score for exact SKU matches"
+    )
+    
+    confidence_first_result_match: int = Field(
+        default=90,
+        description="Confidence score for first result with SKU match"
+    )
+    
+    confidence_first_result_no_match: int = Field(
+        default=60,
+        description="Confidence score for first result without SKU match"
+    )
+    
+    confidence_fallback: int = Field(
+        default=30,
+        description="Fallback confidence score"
+    )
+    
+    confidence_minimum_threshold: int = Field(
+        default=30,
+        description="Minimum confidence threshold for accepting results"
+    )
+    
+    # Rate Limiting Configuration
+    scraping_requests_per_minute: int = Field(
+        default=30,
+        description="Maximum scraping requests per minute"
+    )
+    
+    scraping_burst_limit: int = Field(
+        default=10,
+        description="Maximum burst requests for scraping"
+    )
+    
+    # Image Download Configuration (for future Task 5)
+    image_download_enabled: bool = Field(
+        default=False,
+        description="Enable automatic image downloading"
+    )
+    
+    image_download_max_concurrent: int = Field(
+        default=3,
+        description="Maximum concurrent image downloads"
+    )
+    
+    image_download_timeout: int = Field(
+        default=30,
+        description="Image download timeout in seconds"
+    )
+    
+    image_download_retry_attempts: int = Field(
+        default=3,
+        description="Number of retry attempts for failed image downloads"
+    )
+    
+    image_download_max_file_size: int = Field(
+        default=10 * 1024 * 1024,  # 10MB
+        description="Maximum image file size for downloads in bytes"
+    )
+    
+    image_download_allowed_formats: str = Field(
+        default="jpg,jpeg,png,webp,gif",
+        description="Allowed image formats for downloads (comma-separated)"
+    )
+    
+    image_storage_path: str = Field(
+        default="products/{product_id}/images/",
+        description="S3 storage path pattern for product images"
+    )
+    
+    image_quality_check: bool = Field(
+        default=True,
+        description="Enable image quality validation"
+    )
+    
+    image_resize_enabled: bool = Field(
+        default=True,
+        description="Enable automatic image resizing"
+    )
+    
+    image_max_dimension: int = Field(
+        default=2048,
+        description="Maximum image dimension for resizing"
+    )
+    
     class Config:
         """Pydantic configuration."""
         # Only load .env file if not running tests

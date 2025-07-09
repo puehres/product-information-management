@@ -61,3 +61,14 @@ types-requests==2.31.0.10
 
 # CORS middleware
 python-multipart==0.0.20
+
+# Web scraping and HTML parsing
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# Retry logic and rate limiting
+tenacity==8.2.3
+limits==3.6.0
+
+# Additional async HTTP client features
+aiofiles==23.2.1
