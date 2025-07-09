@@ -1,0 +1,40 @@
+{
+  "name": "product-automation-testing",
+  "version": "1.0.0",
+  "description": "Comprehensive testing infrastructure for Product Automation System",
+  "private": true,
+  "scripts": {
+    "test:all": "./scripts/run-all-tests.sh",
+    "test:quick": "./scripts/run-all-tests.sh --quick",
+    "test:pre-commit": "./scripts/run-all-tests.sh --pre-commit",
+    "test:backend:unit": "cd backend && source venv/bin/activate && python -m pytest tests/unit/ -v",
+    "test:backend:integration": "cd backend && source venv/bin/activate && python -m pytest tests/integration/ -v",
+    "test:backend:connectivity": "cd backend && source venv/bin/activate && python -m pytest tests/connectivity/ -v",
+    "test:frontend": "cd frontend && npm test -- --watchAll=false",
+    "test:lint": "npm run test:lint:backend && npm run test:lint:frontend",
+    "test:lint:backend": "cd backend && flake8 app/ tests/",
+    "test:lint:frontend": "cd frontend && npm run lint",
+    "test:types": "npm run test:types:backend && npm run test:types:frontend",
+    "test:types:backend": "cd backend && mypy app/",
+    "test:types:frontend": "cd frontend && npm run type-check",
+    "test:format": "npm run test:format:backend && npm run test:format:frontend",
+    "test:format:backend": "cd backend && black --check app/ tests/",
+    "test:format:frontend": "cd frontend && npm run format:check",
+    "setup:test-env": "./scripts/setup-test-env.sh",
+    "reset:test-env": "./scripts/reset-test-env.sh",
+    "validate:env": "./scripts/validate-env.sh"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "python": ">=3.9.0"
+  },
+  "keywords": [
+    "testing",
+    "pytest",
+    "jest",
+    "coverage",
+    "automation"
+  ],
+  "author": "Product Automation Team",
+  "license": "MIT"
+}

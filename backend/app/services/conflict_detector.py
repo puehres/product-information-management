@@ -68,33 +68,35 @@ class ConflictDetector:
             if name_conflict:
                 conflicts.append(name_conflict)
             
-            # Category conflict detection
-            category_conflict = self._detect_category_conflict(
-                existing_product.category,
-                new_data.category
-            )
-            if category_conflict:
-                conflicts.append(category_conflict)
+            # Category conflict detection (if available)
+            if hasattr(new_data, 'category'):
+                category_conflict = self._detect_category_conflict(
+                    getattr(existing_product, 'category', None),
+                    new_data.category
+                )
+                if category_conflict:
+                    conflicts.append(category_conflict)
             
-            # Manufacturer conflict detection
-            manufacturer_conflict = self._detect_manufacturer_conflict(
-                existing_product.manufacturer,
-                new_data.manufacturer
-            )
-            if manufacturer_conflict:
-                conflicts.append(manufacturer_conflict)
+            # Manufacturer conflict detection (if available)
+            if hasattr(new_data, 'manufacturer'):
+                manufacturer_conflict = self._detect_manufacturer_conflict(
+                    getattr(existing_product, 'manufacturer', None),
+                    new_data.manufacturer
+                )
+                if manufacturer_conflict:
+                    conflicts.append(manufacturer_conflict)
             
             # Description conflict detection
             description_conflict = self._detect_description_conflict(
-                existing_product.description,
-                new_data.description
+                getattr(existing_product, 'supplier_description', None),
+                getattr(new_data, 'description', None)
             )
             if description_conflict:
                 conflicts.append(description_conflict)
             
             logger.info(
                 "Conflict detection completed",
-                manufacturer_sku=existing_product.manufacturer_sku,
+                supplier_sku=existing_product.supplier_sku,
                 conflicts_found=len(conflicts)
             )
             
@@ -103,7 +105,7 @@ class ConflictDetector:
         except Exception as e:
             logger.error(
                 "Error during conflict detection",
-                manufacturer_sku=existing_product.manufacturer_sku,
+                supplier_sku=existing_product.supplier_sku,
                 error=str(e)
             )
             raise

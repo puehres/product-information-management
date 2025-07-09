@@ -69,15 +69,16 @@ const customJestConfig = {
     "!src/**/index.{js,jsx,ts,tsx}",
     "!src/app/layout.tsx",
     "!src/app/globals.css",
+    "!src/__mocks__/**",
   ],
 
-  // Coverage thresholds
+  // Coverage thresholds updated to 95%
   coverageThreshold: {
     global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
+      branches: 95,
+      functions: 95,
+      lines: 95,
+      statements: 95,
     },
   },
 

@@ -181,7 +181,7 @@ class DeduplicationService:
                 # Auto-resolve minor conflicts
                 logger.info(
                     "Auto-resolving minor conflicts",
-                    manufacturer_sku=existing_product.manufacturer_sku,
+                    supplier_sku=existing_product.supplier_sku,
                     conflicts_count=len(conflicts)
                 )
                 
@@ -193,7 +193,7 @@ class DeduplicationService:
                     product_id=existing_product.id,
                     action="auto_resolved_conflicts",
                     conflicts=conflicts,
-                    manufacturer_sku=existing_product.manufacturer_sku
+                    manufacturer_sku=new_data.manufacturer_sku  # Use from input data
                 )
             else:
                 # Flag for manual review
@@ -206,7 +206,7 @@ class DeduplicationService:
                 
                 logger.warning(
                     "Product flagged for review due to conflicts",
-                    manufacturer_sku=existing_product.manufacturer_sku,
+                    supplier_sku=existing_product.supplier_sku,
                     severity=severity,
                     conflicts_count=len(conflicts)
                 )
@@ -216,13 +216,13 @@ class DeduplicationService:
                     product_id=existing_product.id,
                     action="flagged_for_review",
                     conflicts=conflicts,
-                    manufacturer_sku=existing_product.manufacturer_sku
+                    manufacturer_sku=new_data.manufacturer_sku  # Use from input data
                 )
         else:
             # No conflicts - skip creation
             logger.info(
                 "Duplicate product skipped (no conflicts)",
-                manufacturer_sku=existing_product.manufacturer_sku
+                supplier_sku=existing_product.supplier_sku
             )
             
             return DeduplicationResult(
@@ -230,7 +230,7 @@ class DeduplicationService:
                 product_id=existing_product.id,
                 action="skipped_existing",
                 conflicts=None,
-                manufacturer_sku=existing_product.manufacturer_sku
+                manufacturer_sku=new_data.manufacturer_sku  # Use from input data
             )
     
     async def _create_new_product(
@@ -258,7 +258,7 @@ class DeduplicationService:
             logger.info(
                 "New product created",
                 product_id=str(new_product.id),
-                manufacturer_sku=new_product.manufacturer_sku
+                supplier_sku=new_product.supplier_sku
             )
             
             return DeduplicationResult(
@@ -266,7 +266,7 @@ class DeduplicationService:
                 product_id=new_product.id,
                 action="created_new",
                 conflicts=None,
-                manufacturer_sku=new_product.manufacturer_sku
+                manufacturer_sku=product_data.manufacturer_sku  # Use from input data
             )
             
         except Exception as e:
@@ -295,7 +295,7 @@ class DeduplicationService:
         # In a full implementation, you'd update specific fields based on conflict type
         logger.info(
             "Auto-resolving conflicts (placeholder implementation)",
-            manufacturer_sku=existing_product.manufacturer_sku,
+            supplier_sku=existing_product.supplier_sku,
             conflicts_count=len(conflicts)
         )
         

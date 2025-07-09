@@ -99,9 +99,14 @@ omit = [
     "*/tests/*",
     "*/test_*",
     "*/__init__.py",
+    "*/migrations/*",
+    "*/scripts/*",
 ]
 
 [tool.coverage.report]
+fail_under = 95
+show_missing = true
+skip_covered = false
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -114,3 +119,9 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"

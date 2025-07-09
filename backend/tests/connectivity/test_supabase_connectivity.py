@@ -9,6 +9,7 @@ This script tests:
 4. Basic CRUD operations
 """
 
+import pytest
 import os
 import sys
 from pathlib import Path
@@ -19,151 +20,93 @@ import json
 # Add the app directory to the Python path
 sys.path.append(str(Path(__file__).parent.parent.parent / "app"))
 
-def load_environment():
-    """Load environment variables from .env file."""
+@pytest.fixture
+def supabase_client() -> Client:
+    """Create and return a Supabase client."""
+    # Load environment variables
     env_path = Path(__file__).parent.parent.parent / ".env"
     if env_path.exists():
         load_dotenv(env_path)
-        print("✅ Environment variables loaded successfully")
-        return True
-    else:
-        print(f"❌ Environment file not found: {env_path}")
-        return False
-
-def create_supabase_client() -> Client:
-    """Create and return a Supabase client."""
+    
     url = os.getenv("SUPABASE_URL")
     service_key = os.getenv("SUPABASE_SERVICE_KEY")
     
     if not url or not service_key:
-        raise ValueError("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables")
+        pytest.skip("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY environment variables")
     
-    print(f"🔗 Connecting to Supabase: {url}")
     return create_client(url, service_key)
 
-def test_basic_connection(client: Client) -> bool:
+@pytest.mark.connectivity
+def test_basic_connection(supabase_client: Client):
     """Test basic database connection."""
-    try:
-        # Try to query the suppliers table
-        result = client.table('suppliers').select('*').limit(1).execute()
-        print("✅ Basic database connection successful")
-        return True
-    except Exception as e:
-        print(f"❌ Basic connection failed: {e}")
-        return False
+    # Try to query the suppliers table
+    result = supabase_client.table('suppliers').select('*').limit(1).execute()
+    assert result.data is not None, "Basic database connection failed"
 
-def test_schema_validation(client: Client) -> bool:
+@pytest.mark.connectivity
+def test_schema_validation(supabase_client: Client):
     """Validate that all required tables exist."""
     required_tables = ['suppliers', 'upload_batches', 'products', 'images']
     
-    try:
-        print("🔍 Validating database schema...")
-        
-        for table in required_tables:
-            try:
-                # Try to query each table structure
-                result = client.table(table).select('*').limit(1).execute()
-                print(f"  ✅ Table '{table}' exists and is accessible")
-            except Exception as e:
-                print(f"  ❌ Table '{table}' validation failed: {e}")
-                return False
-        
-        print("✅ All required tables validated successfully")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Schema validation failed: {e}")
-        return False
+    for table in required_tables:
+        # Try to query each table structure
+        result = supabase_client.table(table).select('*').limit(1).execute()
+        assert result.data is not None, f"Table '{table}' validation failed"
 
-def test_lawn_fawn_supplier(client: Client) -> bool:
+@pytest.mark.connectivity
+def test_lawn_fawn_supplier(supabase_client: Client):
     """Test that Lawn Fawn supplier was inserted correctly."""
-    try:
-        print("🌱 Testing Lawn Fawn supplier data...")
-        
-        result = client.table('suppliers').select('*').eq('code', 'LF').execute()
-        
-        if not result.data:
-            print("❌ Lawn Fawn supplier not found")
-            return False
-        
-        supplier = result.data[0]
-        print(f"  ✅ Supplier found: {supplier['name']} ({supplier['code']})")
-        print(f"  ✅ Website: {supplier['website_url']}")
-        print(f"  ✅ Active: {supplier['active']}")
-        print(f"  ✅ Search template configured: {'search_url_template' in supplier and supplier['search_url_template']}")
-        
-        return True
-        
-    except Exception as e:
-        print(f"❌ Lawn Fawn supplier test failed: {e}")
-        return False
+    result = supabase_client.table('suppliers').select('*').eq('code', 'LF').execute()
+    
+    assert result.data, "Lawn Fawn supplier not found"
+    
+    supplier = result.data[0]
+    assert supplier['name'], "Supplier name is missing"
+    assert supplier['code'] == 'LF', "Supplier code mismatch"
+    assert supplier['website_url'], "Supplier website URL is missing"
+    assert supplier['active'] is True, "Supplier should be active"
 
-def test_crud_operations(client: Client) -> bool:
+@pytest.mark.connectivity
+def test_crud_operations(supabase_client: Client):
     """Test basic CRUD operations."""
-    try:
-        print("🔄 Testing CRUD operations...")
-        
-        # Get Lawn Fawn supplier ID
-        supplier_result = client.table('suppliers').select('id').eq('code', 'LF').execute()
-        if not supplier_result.data:
-            print("❌ Cannot find Lawn Fawn supplier for CRUD test")
-            return False
-        
-        supplier_id = supplier_result.data[0]['id']
-        
-        # Test CREATE - Insert a test upload batch
-        test_batch_data = {
-            'supplier_id': supplier_id,
-            'batch_name': 'Test Connectivity Batch',
-            'file_type': 'manual',
-            'status': 'uploaded',
-            'total_products': 0
-        }
-        
-        insert_result = client.table('upload_batches').insert(test_batch_data).execute()
-        if not insert_result.data:
-            print("❌ CREATE operation failed")
-            return False
-        
-        batch_id = insert_result.data[0]['id']
-        print("  ✅ CREATE operation successful")
-        
-        # Test READ - Query the inserted batch
-        read_result = client.table('upload_batches').select('*').eq('id', batch_id).execute()
-        if not read_result.data:
-            print("❌ READ operation failed")
-            return False
-        
-        print("  ✅ READ operation successful")
-        
-        # Test UPDATE - Update the batch status
-        update_result = client.table('upload_batches').update({
-            'status': 'completed',
-            'processed_products': 1
-        }).eq('id', batch_id).execute()
-        
-        if not update_result.data:
-            print("❌ UPDATE operation failed")
-            return False
-        
-        print("  ✅ UPDATE operation successful")
-        
-        # Test DELETE - Remove the test batch
-        delete_result = client.table('upload_batches').delete().eq('id', batch_id).execute()
-        
-        if not delete_result.data:
-            print("❌ DELETE operation failed")
-            return False
-        
-        print("  ✅ DELETE operation successful")
-        print("✅ All CRUD operations completed successfully")
-        return True
-        
-    except Exception as e:
-        print(f"❌ CRUD operations test failed: {e}")
-        return False
+    # Get Lawn Fawn supplier ID
+    supplier_result = supabase_client.table('suppliers').select('id').eq('code', 'LF').execute()
+    assert supplier_result.data, "Cannot find Lawn Fawn supplier for CRUD test"
+    
+    supplier_id = supplier_result.data[0]['id']
+    
+    # Test CREATE - Insert a test upload batch
+    test_batch_data = {
+        'supplier_id': supplier_id,
+        'batch_name': 'Test Connectivity Batch',
+        'file_type': 'manual',
+        'status': 'uploaded',
+        'total_products': 0
+    }
+    
+    insert_result = supabase_client.table('upload_batches').insert(test_batch_data).execute()
+    assert insert_result.data, "CREATE operation failed"
+    
+    batch_id = insert_result.data[0]['id']
+    
+    # Test READ - Query the inserted batch
+    read_result = supabase_client.table('upload_batches').select('*').eq('id', batch_id).execute()
+    assert read_result.data, "READ operation failed"
+    
+    # Test UPDATE - Update the batch status
+    update_result = supabase_client.table('upload_batches').update({
+        'status': 'completed',
+        'processed_products': 1
+    }).eq('id', batch_id).execute()
+    
+    assert update_result.data, "UPDATE operation failed"
+    
+    # Test DELETE - Remove the test batch
+    delete_result = supabase_client.table('upload_batches').delete().eq('id', batch_id).execute()
+    assert delete_result.data, "DELETE operation failed"
 
-def test_frontend_connection() -> bool:
+@pytest.mark.connectivity
+def test_frontend_connection():
     """Test frontend environment configuration."""
     try:
         print("🎨 Testing frontend configuration...")

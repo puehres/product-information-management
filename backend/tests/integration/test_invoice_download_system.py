@@ -6,6 +6,7 @@ This script demonstrates how the S3 download link generation works
 and tests the complete workflow with an existing processed invoice.
 """
 
+import pytest
 import asyncio
 import sys
 import os
@@ -14,15 +15,14 @@ from datetime import datetime
 import requests
 from uuid import UUID
 
-# Add the backend directory to Python path
-sys.path.insert(0, str(Path(__file__).parent))
-
 from app.core.config import get_settings
 from app.services.s3_manager import S3InvoiceManager
 from app.services.database_service import DatabaseService
 from app.services.invoice_processor import InvoiceProcessorService
 
 
+@pytest.mark.asyncio
+@pytest.mark.integration
 async def test_s3_download_system():
     """Test the complete S3 download system workflow."""
     print("🧪 Testing Invoice Download System")
@@ -239,6 +239,8 @@ async def test_s3_download_system():
         traceback.print_exc()
 
 
+@pytest.mark.asyncio
+@pytest.mark.integration
 async def test_download_url_expiration():
     """Test download URL expiration behavior."""
     print("\n🕐 Testing Download URL Expiration")

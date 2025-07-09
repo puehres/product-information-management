@@ -11,19 +11,19 @@ This script tests the complete invoice processing workflow:
 6. Query the database to verify all data
 """
 
+import pytest
 import asyncio
 import sys
 import os
 from pathlib import Path
-
-# Add the app directory to Python path
-sys.path.insert(0, str(Path(__file__).parent / "app"))
 
 from app.services.invoice_processor import InvoiceProcessorService
 from app.services.database_service import DatabaseService
 from app.models.invoice import InvoiceUploadResponse
 
 
+@pytest.mark.asyncio
+@pytest.mark.integration
 async def test_end_to_end_invoice_processing():
     """Test complete invoice processing workflow."""
     

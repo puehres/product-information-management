@@ -5,6 +5,7 @@ S3 Connectivity Test Script
 Tests AWS S3 connection and basic operations for the invoice processing system.
 """
 
+import pytest
 import asyncio
 import sys
 import os
@@ -39,6 +40,8 @@ structlog.configure(
 logger = structlog.get_logger(__name__)
 
 
+@pytest.mark.asyncio
+@pytest.mark.connectivity
 async def test_s3_connectivity():
     """
     Test S3 connectivity and basic operations.
@@ -198,6 +201,8 @@ async def test_s3_connectivity():
         return False
 
 
+@pytest.mark.asyncio
+@pytest.mark.connectivity
 async def test_s3_configuration():
     """
     Test S3 configuration and settings.

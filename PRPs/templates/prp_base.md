@@ -192,25 +192,52 @@ curl -X POST http://localhost:8000/feature \
 # If error: Check logs at logs/app.log for stack trace
 ```
 
-## Testing Strategy (MANDATORY)
+## Testing Strategy (MANDATORY - Updated for Comprehensive Infrastructure)
 
-### Backend Tests
-- [ ] Unit tests for core functionality
-- [ ] Integration tests for API endpoints  
-- [ ] Configuration validation tests
-- [ ] Error handling tests
+### Pre-Implementation Testing Validation
+- [ ] Run `npm run test:all` to ensure clean baseline
+- [ ] Identify existing tests that may need updates
+- [ ] Plan test structure for new functionality
+
+### Backend Tests (Choose appropriate categories)
+- [ ] **Unit Tests** (`backend/tests/unit/test_[feature].py`):
+  - [ ] Happy path functionality
+  - [ ] Edge cases and boundary conditions  
+  - [ ] Error handling and validation
+  - [ ] Mock external dependencies appropriately
+- [ ] **Integration Tests** (`backend/tests/integration/test_[feature].py`):
+  - [ ] API endpoint workflows
+  - [ ] Database interactions
+  - [ ] Service integration scenarios
+- [ ] **Connectivity Tests** (`backend/tests/connectivity/test_[service].py`):
+  - [ ] External service connections (if applicable)
+  - [ ] Configuration validation
 
 ### Frontend Tests (if applicable)
-- [ ] Component unit tests
-- [ ] Integration tests for key workflows
-- [ ] TypeScript compilation validation
-- [ ] User interaction tests
+- [ ] **Component Tests** (`frontend/src/components/__tests__/`):
+  - [ ] Component rendering and props
+  - [ ] User interactions and events
+  - [ ] State management and hooks
+- [ ] **Service Tests** (`frontend/src/services/__tests__/`):
+  - [ ] API client functionality
+  - [ ] Data transformation logic
+  - [ ] Error handling scenarios
+- [ ] **Integration Tests** (`frontend/src/__tests__/`):
+  - [ ] User workflows and navigation
+  - [ ] Form submissions and validation
+  - [ ] Real API integration scenarios
 
-### Test Execution Plan
-- [ ] Run existing tests to ensure no regression
-- [ ] Add new tests for implemented features
-- [ ] Validate test coverage meets project standards
-- [ ] Test error scenarios and edge cases
+### Test Execution Validation (MANDATORY)
+- [ ] **Quick Validation**: `npm run test:quick` passes during development
+- [ ] **Pre-Commit Validation**: `npm run test:pre-commit` passes before completion
+- [ ] **Full Test Suite**: `npm run test:all` passes before task completion
+- [ ] **Coverage Validation**: Meets 95%+ coverage requirement
+- [ ] **No Regressions**: All existing tests continue to pass
+
+### Test Environment Management
+- [ ] Use `npm run setup:test-env` if environment setup needed
+- [ ] Use `npm run reset:test-env` if clean environment required
+- [ ] Validate test database and external service connectivity
 
 ## Documentation Updates Required (MANDATORY)
 
@@ -226,15 +253,18 @@ curl -X POST http://localhost:8000/feature \
 - [ ] Update type hints and annotations
 - [ ] Document configuration options
 
-## Final validation Checklist
-- [ ] All tests pass: `uv run pytest tests/ -v`
+## Final validation Checklist (UPDATED)
+- [ ] **All tests pass**: `npm run test:all` ✅
+- [ ] **Coverage meets standards**: 95%+ overall coverage ✅
+- [ ] **No test regressions**: Existing functionality unaffected ✅
+- [ ] **Test documentation updated**: If new patterns introduced ✅
+- [ ] **Environment validated**: `npm run validate:env` passes ✅
 - [ ] No linting errors: `uv run ruff check src/`
 - [ ] No type errors: `uv run mypy src/`
 - [ ] Manual test successful: [specific curl/command]
 - [ ] Error cases handled gracefully
 - [ ] Logs are informative but not verbose
 - [ ] Documentation updated as specified above
-- [ ] All testing requirements met
 - [ ] Ready for PRP completion workflow
 
 ---

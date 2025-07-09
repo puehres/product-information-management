@@ -319,37 +319,237 @@ When the backend is running, visit:
 
 ## 🧪 Testing
 
-### Backend Testing
-
+### Quick Start
 ```bash
-cd backend
+# One-click test all (full validation)
+npm run test:all
 
-# Run all tests
-pytest
+# Quick development tests (30 seconds)
+npm run test:quick
 
-# Run with coverage
-pytest --cov=app --cov-report=html
-
-# Run specific test file
-pytest tests/test_config.py
-
-# Run tests in watch mode
-pytest-watch
+# Pre-commit validation (2 minutes)
+npm run test:pre-commit
 ```
 
-### Frontend Testing
+### Test Categories
 
+#### Backend Testing
 ```bash
+# Unit tests (fast, isolated)
+npm run test:backend:unit
+
+# Integration tests (API workflows)
+npm run test:backend:integration
+
+# Connectivity tests (external services)
+npm run test:backend:connectivity
+```
+
+#### Frontend Testing
+```bash
+# All frontend tests
+npm run test:frontend
+
+# Watch mode for development
+cd frontend && npm run test:watch
+
+# Coverage report
+cd frontend && npm run test:coverage
+```
+
+#### Code Quality
+```bash
+# Linting (backend + frontend)
+npm run test:lint
+
+# Type checking (mypy + tsc)
+npm run test:types
+
+# Code formatting validation
+npm run test:format
+```
+
+### Environment Management
+
+#### Setup Test Environment
+```bash
+# Complete environment setup
+npm run setup:test-env
+
+# Reset test environment
+npm run reset:test-env
+
+# Validate environment
+npm run validate:env
+```
+
+#### Manual Setup (if needed)
+```bash
+# Backend setup
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+pip install pytest pytest-asyncio pytest-cov black isort mypy flake8
+
+# Frontend setup
 cd frontend
+npm install
 
-# Run all tests
-npm test
+# Environment configuration
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+# Configure your credentials in .env files
+```
 
-# Run tests in watch mode
-npm run test:watch
+### Test Organization
 
-# Run tests with coverage
-npm run test:coverage
+#### Backend Test Structure
+```
+backend/tests/
+├── unit/              # Fast, isolated tests (95%+ coverage)
+│   ├── test_config.py
+│   ├── test_database.py
+│   ├── test_models.py
+│   └── ...
+├── integration/       # API and workflow tests
+│   ├── test_api_workflow.py
+│   ├── test_end_to_end_invoice.py
+│   └── ...
+├── connectivity/      # External service tests
+│   ├── test_supabase_connectivity.py
+│   ├── test_s3_connectivity.py
+│   └── ...
+└── fixtures/          # Test data and mocks
+    ├── test_invoice.pdf
+    └── mock_data.py
+```
+
+#### Frontend Test Structure
+```
+frontend/src/
+├── components/__tests__/
+├── services/__tests__/
+├── utils/__tests__/
+└── __tests__/         # Integration tests
+```
+
+### Coverage Requirements
+
+- **Overall Project**: 95% coverage with enforcement
+- **Unit Tests**: 98%+ coverage (business logic)
+- **Integration Tests**: 90%+ coverage (API endpoints)
+- **Frontend**: 95% coverage (components, services, utils)
+
+### Development Workflow
+
+#### 7-Step Development Workflow Testing Integration
+1. **Planning Phase**: Review existing tests, plan test strategy
+2. **Feature Specification**: Define testing requirements and success criteria
+3. **PRP Generation**: Include comprehensive testing strategy
+4. **PRP Review**: Validate testing approach and coverage plans
+5. **PRP Execution**: Run `npm run test:quick` after each implementation step
+6. **Task Completion**: **MANDATORY** `npm run test:all` must pass
+7. **Documentation Sync**: Update testing docs if new patterns introduced
+
+#### Workflow Commands
+```bash
+# During development (Step 5)
+npm run test:quick              # Fast feedback loop
+
+# Before task completion (Step 6) 
+npm run test:pre-commit         # Pre-completion validation
+npm run test:all               # Full validation (MANDATORY)
+
+# Environment management (as needed)
+npm run setup:test-env         # Initial setup
+npm run reset:test-env         # Clean slate
+npm run validate:env           # Health check
+```
+
+#### Pre-Commit Checklist
+```bash
+# Run before every commit
+npm run test:pre-commit
+
+# This includes:
+# ✅ Code formatting validation
+# ✅ Linting (backend + frontend)
+# ✅ Type checking (mypy + tsc)
+# ✅ Unit tests (fast subset)
+# ✅ Frontend tests with coverage
+```
+
+#### Development Testing
+```bash
+# Quick feedback during development
+npm run test:quick
+
+# Watch mode for specific areas
+cd backend && python -m pytest tests/unit/ --watch
+cd frontend && npm run test:watch
+```
+
+#### Full Validation
+```bash
+# Complete test suite (before major commits)
+npm run test:all
+
+# This includes:
+# ✅ All code quality checks
+# ✅ All unit tests with coverage
+# ✅ All integration tests
+# ✅ All connectivity tests
+# ✅ Frontend tests with coverage
+```
+
+### Troubleshooting
+
+#### Common Issues
+
+**Environment Setup Issues:**
+```bash
+# Reset and rebuild environment
+npm run reset:test-env
+npm run setup:test-env
+```
+
+**Test Database Issues:**
+```bash
+# Reset test database
+./scripts/reset-test-env.sh
+```
+
+**Coverage Issues:**
+```bash
+# Generate detailed coverage report
+cd backend && python -m pytest --cov=app --cov-report=html
+cd frontend && npm run test:coverage
+```
+
+**Mock Issues:**
+```bash
+# Clear all caches
+cd backend && find . -name "*.pyc" -delete
+cd frontend && npm run test -- --clearCache
+```
+
+#### Performance Optimization
+
+**Parallel Test Execution:**
+```bash
+# Backend parallel execution
+cd backend && python -m pytest -n auto
+
+# Frontend parallel execution
+cd frontend && npm test -- --maxWorkers=4
+```
+
+**Test Selection:**
+```bash
+# Run specific test categories
+cd backend && python -m pytest -m "unit"
+cd backend && python -m pytest -m "not slow"
 ```
 
 ## 🔧 Development

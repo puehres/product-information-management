@@ -20,6 +20,7 @@ from app.models.deduplication import (
     DeduplicationConfig
 )
 from app.models.product import Product, ProductCreate
+from app.models.base import ProductStatus
 
 
 class TestDeduplicationService:
@@ -66,12 +67,14 @@ class TestDeduplicationService:
             batch_id=uuid4(),
             supplier_id=uuid4(),
             supplier_sku="TEST-SKU-001",
-            manufacturer_sku="MFG-SKU-001",
             supplier_name="Test Product",
-            manufacturer="TestMfg",
-            category="test-category",
+            supplier_description="Test product description",
             supplier_price_usd=Decimal("19.99"),
-            description="Test product description",
+            scraped_images_urls=[],
+            scraping_confidence=85,
+            status=ProductStatus.READY,
+            quality_score=90,
+            requires_review=False,
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
@@ -89,7 +92,14 @@ class TestDeduplicationService:
         # Mock product creation
         created_product = Product(
             id=new_product_id,
-            **sample_product_create.dict()
+            **sample_product_create.dict(),
+            scraped_images_urls=[],
+            scraping_confidence=85,
+            status=ProductStatus.READY,
+            quality_score=90,
+            requires_review=False,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
         )
         mock_db_service.create_product.return_value = created_product
         
@@ -299,17 +309,51 @@ class TestDeduplicationService:
             if sku == "NEW-MFG-001":
                 return None  # New product
             elif sku == "DUP-MFG-001":
-                return Product(id=uuid4(), manufacturer_sku=sku, supplier_name="Duplicate Product")
+                return Product(
+                    id=uuid4(), 
+                    batch_id=uuid4(),
+                    supplier_id=uuid4(),
+                    supplier_sku="DUP-001",
+                    supplier_name="Duplicate Product",
+                    scraped_images_urls=[],
+                    scraping_confidence=85,
+                    status=ProductStatus.READY,
+                    quality_score=90,
+                    requires_review=False,
+                    created_at=datetime.now(),
+                    updated_at=datetime.now()
+                )
             elif sku == "CONF-MFG-001":
                 return Product(
                     id=uuid4(), 
-                    manufacturer_sku=sku, 
+                    batch_id=uuid4(),
+                    supplier_id=uuid4(),
+                    supplier_sku="CONF-001",
                     supplier_name="Conflict Product",
-                    supplier_price_usd=Decimal("49.99")  # Different price
+                    supplier_price_usd=Decimal("49.99"),  # Different price
+                    scraped_images_urls=[],
+                    scraping_confidence=85,
+                    status=ProductStatus.READY,
+                    quality_score=90,
+                    requires_review=False,
+                    created_at=datetime.now(),
+                    updated_at=datetime.now()
                 )
         
         mock_db_service.get_product_by_manufacturer_sku.side_effect = mock_get_by_sku
-        mock_db_service.create_product.return_value = Product(id=uuid4(), manufacturer_sku="NEW-MFG-001")
+        mock_db_service.create_product.return_value = Product(
+            id=uuid4(), 
+            batch_id=uuid4(),
+            supplier_id=uuid4(),
+            supplier_sku="NEW-001",
+            scraped_images_urls=[],
+            scraping_confidence=85,
+            status=ProductStatus.READY,
+            quality_score=90,
+            requires_review=False,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
         
         # Mock conflict detection
         def mock_detect_conflicts(existing, new):
@@ -367,24 +411,31 @@ class TestConflictDetector:
         """Sample existing product for conflict testing."""
         return Product(
             id=uuid4(),
-            manufacturer_sku="TEST-001",
+            batch_id=uuid4(),
+            supplier_id=uuid4(),
+            supplier_sku="TEST-001",
             supplier_name="Original Product Name",
+            supplier_description="Original description",
             supplier_price_usd=Decimal("20.00"),
-            category="electronics",
-            manufacturer="TestCorp",
-            description="Original description"
+            scraped_images_urls=[],
+            scraping_confidence=85,
+            status=ProductStatus.READY,
+            quality_score=90,
+            requires_review=False,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
         )
     
     @pytest.fixture
     def sample_new_data(self):
         """Sample new product data for conflict testing."""
         return ProductCreate(
+            batch_id=uuid4(),
+            supplier_id=uuid4(),
+            supplier_sku="TEST-001",
             manufacturer_sku="TEST-001",
             supplier_name="Original Product Name",
-            supplier_price_usd=Decimal("20.00"),
-            category="electronics",
-            manufacturer="TestCorp",
-            description="Original description"
+            supplier_price_usd=Decimal("20.00")
         )
     
     @pytest.mark.asyncio
@@ -632,6 +683,9 @@ class TestDeduplicationIntegration:
             service.db = mock_db
             
             product_data = ProductCreate(
+                batch_id=uuid4(),
+                supplier_id=uuid4(),
+                supplier_sku="DUPLICATE-SKU",
                 manufacturer_sku="DUPLICATE-SKU",
                 supplier_name="Test Product"
             )

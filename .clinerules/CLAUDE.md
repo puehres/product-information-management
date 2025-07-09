@@ -44,14 +44,21 @@
 - **Use clear, consistent imports** (prefer relative imports within packages).
 - **Use environment variables** for configuration and API keys - never hardcode sensitive values.
 
-### 🧪 Testing & Reliability
-- **Always create tests for new features** using the project's testing framework.
-- **After updating any logic**, check whether existing tests need to be updated. If so, do it.
-- **Tests should live in `/tests` folders** mirroring the main app structure.
-- Include at least:
-  - 1 test for expected use
-  - 1 edge case
-  - 1 failure case
+### 🧪 Testing & Reliability (ENHANCED)
+- **MANDATORY: Run test suite before any task completion** using `npm run test:pre-commit`
+- **Always create tests for new features** in appropriate test directories:
+  - Backend: `backend/tests/unit/`, `backend/tests/integration/`, `backend/tests/connectivity/`
+  - Frontend: `frontend/src/**/__tests__/`
+- **Update existing tests** when modifying functionality - never ignore failing tests
+- **Validate test coverage** meets project standards (95%+ overall)
+- **Test categories required**:
+  - Unit tests: Fast, isolated (expected use, edge case, failure case)
+  - Integration tests: API workflows and end-to-end scenarios
+  - Connectivity tests: External service validation (when applicable)
+- **Use comprehensive testing infrastructure**:
+  - `npm run test:quick` for rapid development feedback
+  - `npm run test:pre-commit` for pre-completion validation
+  - `npm run test:all` for full validation before task completion
 
 ### ✅ Task Completion
 - **Mark completed tasks in `TASK.md`** immediately after finishing them using the simplified format below.
@@ -71,14 +78,37 @@
 **Discovered During Work**: Any new items found (if applicable)
 ```
 
+### 🚨 MANDATORY TESTING WORKFLOW
+**BEFORE claiming any task complete:**
+- [ ] Run `npm run test:pre-commit` - ALL tests must pass
+- [ ] Verify test coverage meets standards (95%+ overall)
+- [ ] Add/update tests for new/modified functionality
+- [ ] Validate no test regressions introduced
+
+**DURING development:**
+- [ ] Use `npm run test:quick` for rapid feedback during development
+- [ ] Run relevant test categories during implementation
+- [ ] Fix failing tests immediately - never ignore test failures
+- [ ] Update existing tests when modifying functionality
+
+**Testing Integration in 7-Step Workflow:**
+- **Step 4 (PRP Review)**: Include testing strategy validation
+- **Step 5 (PRP Execution)**: Run tests after each major implementation step
+- **Step 6 (Task Completion)**: Mandatory full test suite validation
+- **Step 7 (Documentation Sync)**: Update testing documentation if needed
+
 ### 🚨 CRITICAL WORKFLOW RULES
 - **NEVER proceed to a new task without marking the previous task complete in TASK.md**
 - **NEVER claim a task is finished without updating TASK.md first**
 - **NEVER use attempt_completion without verifying TASK.md is updated**
+- **NEVER use attempt_completion without running npm run test:pre-commit**
 - **ALWAYS pause after each subtask completion to update TASK.md**
 
 ### ✅ COMPLETION VERIFICATION CHECKLIST
 Before using attempt_completion or claiming any task is done:
+- [ ] **MANDATORY: npm run test:pre-commit passes** ✅
+- [ ] **Test coverage meets 95%+ standard** ✅
+- [ ] **No test regressions introduced** ✅
 - [ ] All subtasks marked complete in TASK.md with [x]
 - [ ] Any new discoveries added to "Discovered During Work" section
 - [ ] Completion timestamp added (YYYY-MM-DD format)
